@@ -4,7 +4,7 @@ import java.util.*;
 
 public class SchedulerLogic {
 
-    pubic stattic class Process{
+    public static class Process{
         public int pid,arrival,burst,remaining,completion,start;
         public int waiting,turnaround,response;
         public Process(int pid, int arrival,int burst) {
@@ -19,7 +19,7 @@ public class SchedulerLogic {
     //FIFO logic
 
     public static List<int[]> runFIFO (List<Process> processes){
-        List<int[>blocks = new ArrayList<>();
+        List<int[]>blocks = new ArrayList<>();
         int time = 0;
         for (Process p : processes){
             if (time < p.arrival) time = p.arrival;
@@ -31,6 +31,7 @@ public class SchedulerLogic {
         }
         return blocks;
     }
+    //SJF logic (non-preemptive)
 
     public static List<int[]> runSJF(List<Process> processes){
         List<int[]> blocks = new ArrayList<>();
@@ -57,5 +58,161 @@ public class SchedulerLogic {
         }
         return blocks;
     }
+    //SRTF logic (preemptive)
 
+    public static List<int[]> runSRTF(List<Process> processes){
+        List<int[]> blocks = new ArrayList<>();
+        List<Process> ready = new ArrayList<>();
+        int time = 0, completed = 0, n = processes.size();
+        Process current = null;
+        int lastTime = 0;
+        while(completed < n){
+            for(Process p : processes){
+                if (p.arrival == time) ready.add(p);
+        }
+        Process next = ready.stream()
+        .filter(p -> p.remaining > 0)
+        .min(Comparator.comparingInt(p -> p.remaining))
+        .orElse(null);
+        if(next != null){
+            if (current != next){
+                if (current != null && current.remaining > 0) {
+                    blocks.add(new int[]{current.pid, lastTime, time});
+                }
+                current = next;
+                lastTime = time;
+                if (current.start == -1) current.start = time;
+            }
+            next.remaining--;
+            if (next.remaining == 0){
+                next.completion = time + 1;
+                next.turnaround =next.completion - next.arrival;
+                next.waiting = next.turnaround - next.burst;
+                completed++;
+            }
+            time ++;
+        }
+    }
+        if (current != null && current.remaining > 0) {
+            blocks.add(new int[]{current.pid, lastTime, time});
+        }
+        return blocks;
+    }
+    //Round Robin logic
+    public static List<int[]> runRoundRobin(List<Process> processes,int quantum){
+        List<int[]> blocks = new ArrayList<>();
+        Queue<Process> queue = new LinkedList<>();
+        int time = 0, completed = 0, n = processes.size();
+        List<Process> arrived = new ArrayList<>(processes);
+        while (completed < n) {
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+                Process p = it.next();
+                if (p.arrival <= time) {
+                    queue.add(p);
+                    it.remove();
+                }
+            }
+            if (queue.isEmpty()) {
+                time++;
+                continue;
+            }
+            Process p = queue.poll();
+            int exec = Math.min(quantum, p.remaining);
+            if (p.start == -1) p.start = time;
+            blocks.add(new int[]{p.pid, time, time + exec});
+            time += exec;
+            p.remaining -= exec;
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+                Process q = it.next();
+                if (q.arrival <= time) {
+                    queue.add(q);
+                    it.remove();
+                }
+            }
+            if (p.remaining > 0) {
+                queue.add(p);
+            } else {
+                p.completion = time;
+                p.turnaround = p.completion - p.arrival;
+                p.waiting = p.turnaround - p.burst;
+                completed++;
+            }
+        }
+        return blocks;
+    }
+
+    //Multi-level Queue logic
+    public static List<int[]> runMLFQ(List<Process> processes, int[] quantums) {
+        int numQueues = quantums.length;
+        List<int[]> blocks = new ArrayList<>();
+        List<Queue<Process>> queues = new ArrayList<>();
+        for (int i = 0; i < numQueues; i++) queues.add(new LinkedList<>());
+        int time = 0, completed = 0, n = processes.size();
+        List<Process> arrived = new ArrayList<>(processes);
+        while (completed < n) {
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+                Process p = it.next();
+                if (p.arrival <= time) {
+                    queues.get(0).add(p);
+                    it.remove();
+                }
+            }
+            Process p = null;
+            int qIdx = -1;
+            for (int i = 0; i < numQueues; i++) {
+                if (!queues.get(i).isEmpty()) {
+                    p = queues.get(i).poll();
+                    qIdx = i;
+                    break;
+                }
+            }
+            if (p == null) {
+                time++;
+                continue;
+            }
+            int exec = Math.min(quantums[qIdx], p.remaining);
+            if (p.start == -1) p.start = time;
+            blocks.add(new int[]{p.pid, time, time + exec});
+            time += exec;
+            p.remaining -= exec;
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+                Process q = it.next();
+                if (q.arrival <= time) {
+                    queues.get(0).add(q);
+                    it.remove();
+                }
+            }
+            if (p.remaining > 0) {
+                if (qIdx < numQueues - 1) {
+                    queues.get(qIdx + 1).add(p);
+                } else {
+                    queues.get(qIdx).add(p);
+                }
+            } else {
+                p.completion = time;
+                p.turnaround = p.completion - p.arrival;
+                p.waiting = p.turnaround - p.burst;
+                completed++;
+            }
+        }
+        return blocks;
+    }
+
+    // Utility: Calculate averages
+    public static Map<String, Double> calculateAverages(List<Process> processes) {
+        int n = processes.size();
+        double totalWT = 0, totalTAT = 0;
+        for (Process p : processes) {
+            totalWT += p.waiting;
+            totalTAT += p.turnaround;
+        }
+        Map<String, Double> avg = new HashMap<>();
+        avg.put("avgWaiting", totalWT / n);
+        avg.put("avgTurnaround", totalTAT / n);
+        return avg;
+    }
 }
+   
+
+
+

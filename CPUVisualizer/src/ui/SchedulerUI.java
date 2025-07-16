@@ -50,7 +50,7 @@ public class SchedulerUI extends JFrame {
 
         List<int[]> rawBlocks = new ArrayList<>();
         switch (selectedAlgo) {
-            case "FCFS":
+            case "FIFO":
                 rawBlocks = SchedulerLogic.runFIFO(new ArrayList<>(processes));
                 break;
             case "SJF":

@@ -101,7 +101,7 @@ public class SchedulerLogic {
         }
     }
         if (current != null && current.remaining > 0) {
-            blocks.add(new int[]{current.pid, lastTime, time});
+            blocks.add(new GanttBlock(current.pid, lastTime, time));
         }
         return blocks;
     }

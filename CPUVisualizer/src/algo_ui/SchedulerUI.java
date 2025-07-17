@@ -17,11 +17,24 @@ public class SchedulerUI extends JFrame {
 
     public SchedulerUI() {
         setTitle("CPU Scheduling Visualizer");
-        setSize(1000, 500);
+        setSize(1200, 700);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(Color.BLUE);
 
-        // Top panel for controls
+        initControls();
+        initDashBoard();
+        setVisible(true);
+    }
+
+
+
+
+
+
+
+
+        /*  Top panel for controls
         JPanel controlPanel = new JPanel(new FlowLayout());
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         String[] algorithms = {"FCFS", "SJF", "RR", "SRTF"};
@@ -75,6 +88,6 @@ public class SchedulerUI extends JFrame {
                 break;
         }
 
-        chart.setBlocks(rawBlocks);
+        chart.setBlocks(rawBlocks);*/
     }
-}
+//}

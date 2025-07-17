@@ -1,7 +1,6 @@
 package CPUVisualizer.src.algo_ui;
 
 import java.util.*;
-import CPUVisualizer.src.algo_ui.GanttBlock;
 
 public class SchedulerLogic {
 

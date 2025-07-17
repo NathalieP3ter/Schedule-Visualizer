@@ -52,6 +52,7 @@ private void initControls() {
   
 }
 
+
         /*  Top panel for controls
         JPanel controlPanel = new JPanel(new FlowLayout());
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -108,4 +109,3 @@ private void initControls() {
 
         chart.setBlocks(rawBlocks);*/
     }
-//}

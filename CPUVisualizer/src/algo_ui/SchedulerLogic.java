@@ -214,32 +214,15 @@ public class SchedulerLogic {
 
     // Utility: Calculate averages
     public static Map<String, Double> calculateAverages(List<Process> processes) {
-        int n = processes.size();
         double totalWT = 0, totalTAT = 0;
         for (Process p : processes) {
             totalWT += p.waiting;
             totalTAT += p.turnaround;
         }
         Map<String, Double> avg = new HashMap<>();
-        avg.put("avgWaiting", totalWT / n);
-        avg.put("avgTurnaround", totalTAT / n);
+        avg.put("avgWaiting", totalWT / processes.size());
+        avg.put("avgTurnaround", totalTAT / processes,size());
         return avg;
     }
-
-    public static List<GanttBlock> runSJF(int[] arrival, int[] burst) {
-       
-        throw new UnsupportedOperationException("Unimplemented method 'runSJF'");
-    }
-
-    public static List<GanttBlock> runRoundRobin(int[] arrival, int[] burst, int quantum) {
-       
-        throw new UnsupportedOperationException("Unimplemented method 'runRoundRobin'");
-    }
-
-    public static List<GanttBlock> runSRTF(int[] arrival, int[] burst) {
-        
-        throw new UnsupportedOperationException("Unimplemented method 'runSRTF'");
-    }
 }
-   
 

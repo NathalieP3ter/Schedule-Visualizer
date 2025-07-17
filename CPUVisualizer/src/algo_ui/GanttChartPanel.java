@@ -3,6 +3,7 @@ package CPUVisualizer.src.algo_ui;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import CPUVisualizer.src.algo_ui.GanttBlock;
 
 // Simple GanttBlock class
 class GanttBlock {

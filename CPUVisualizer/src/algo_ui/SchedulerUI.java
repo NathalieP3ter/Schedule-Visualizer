@@ -73,3 +73,5 @@ public class SchedulerUI extends JFrame {
         chart.setBlocks(result);
     }
 }
+<br>
+test

@@ -16,7 +16,7 @@ public class GanttChartPanel extends JPanel {
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (blocks == null) || blocks.isEmpty()) return;
+        if (blocks == null || blocks.isEmpty()) return;
 
         int x = 20;
         for (GanttBlock b : blocks) {
@@ -34,7 +34,7 @@ public class GanttChartPanel extends JPanel {
             x += width;
         }
 
-        //final end time label
-            g.drawString("" + blocks.get(blocks.size() - 1).end, x - 5, 100);
-        }
-    }
+        // final end time label
+        g.drawString("" + blocks.get(blocks.size() - 1).end, x - 5, 100);
+    } 
+} 

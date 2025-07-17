@@ -51,15 +51,16 @@ public class SchedulerLogic {
             }
             if (time < next.arrival) time = next.arrival;
             next.start = time;
-            time += next.burst;
+            time+= next.burst;
             next.completion = time;
             next.turnaround = next.completion - next.arrival;
             next.waiting = next.turnaround - next.burst;
-            blocks.add(new int[]{next.pid, next.start, next.completion});
+            blocks.add(new GanttBlock(next.pid, next.start, next.completion));  
             processes.remove(next);
         }
         return blocks;
     }
+
     //SRTF logic (preemptive)
 
     public static List<int[]> runSRTF(List<Process> processes){

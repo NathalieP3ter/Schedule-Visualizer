@@ -18,6 +18,7 @@ public class SchedulerUI extends JFrame {
 
         // Top panel for controls
         JPanel controlPanel = new JPanel(new FlowLayout());
+        controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         String[] algorithms = {"FCFS", "SJF", "RR", "SRTF"};
         algorithmSelector = new JComboBox<>(algorithms);
         quantumField = new JTextField("2", 5);
@@ -49,14 +50,19 @@ public class SchedulerUI extends JFrame {
 
         List<int[]> rawBlocks = new ArrayList<>();
         switch (selectedAlgo) {
-            case "FIFO":
+            case "FCFS":
                 rawBlocks = SchedulerLogic.runFIFO(new ArrayList<>(processes));
                 break;
             case "SJF":
                 rawBlocks = SchedulerLogic.runSJF(new ArrayList<>(processes));
                 break;
             case "RR":
-                int quantum = Integer.parseInt(quantumField.getText());
+                int quantum = 2; // Default quantum/value
+                try {
+                    quantum = Integer.parseInt(quantumField.getText());
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(this, "Invalid quantum value. Using default: 2", "Error", JOptionPane.ERROR_MESSAGE);
+                }
                 rawBlocks = SchedulerLogic.runRoundRobin(new ArrayList<>(processes), quantum);
                 break;
             case "SRTF":

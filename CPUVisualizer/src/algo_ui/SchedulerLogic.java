@@ -106,11 +106,12 @@ public class SchedulerLogic {
         return blocks;
     }
     //Round Robin logic
-    public static List<int[]> runRoundRobin(List<Process> processes,int quantum){
-        List<int[]> blocks = new ArrayList<>();
+    public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
+        List<GanttBlock> blocks = new ArrayList<>();
         Queue<Process> queue = new LinkedList<>();
-        int time = 0, completed = 0, n = processes.size();
         List<Process> arrived = new ArrayList<>(processes);
+        int time = 0, completed = 0, n = processes.size();
+        
         while (completed < n) {
             for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
                 Process p = it.next();
@@ -126,9 +127,12 @@ public class SchedulerLogic {
             Process p = queue.poll();
             int exec = Math.min(quantum, p.remaining);
             if (p.start == -1) p.start = time;
-            blocks.add(new int[]{p.pid, time, time + exec});
+
+            blocks.add(new GanttBlock(p.pid, time, time + exec));
+
             time += exec;
             p.remaining -= exec;
+            
             for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
                 Process q = it.next();
                 if (q.arrival <= time) {

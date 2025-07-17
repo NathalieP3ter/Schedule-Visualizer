@@ -24,7 +24,7 @@ public class SchedulerUI extends JFrame {
         quantumField = new JTextField("2", 5);
 
         JButton simulateBtn = new JButton("Simulate");
-        simulateBtn.addActionListener(e -> simulate());
+        simulateBtn.addActionListener(event -> simulate());
 
         controlPanel.add(new JLabel("Algorithm:"));
         controlPanel.add(algorithmSelector);

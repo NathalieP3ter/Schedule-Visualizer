@@ -152,12 +152,13 @@ public class SchedulerLogic {
         return blocks;
     }
 
-    //Multi-level Queue logic
-    public static List<int[]> runMLFQ(List<Process> processes, int[] quantums) {
+    //Multi-level Feedback Queue logic
+    public static List<GanttBlock> runMLFQ(List<Process> processes, int[] quantums) {
         int numQueues = quantums.length;
-        List<int[]> blocks = new ArrayList<>();
+        List<GanttBlock> blocks = new ArrayList<>();
         List<Queue<Process>> queues = new ArrayList<>();
         for (int i = 0; i < numQueues; i++) queues.add(new LinkedList<>());
+ 
         int time = 0, completed = 0, n = processes.size();
         List<Process> arrived = new ArrayList<>(processes);
         while (completed < n) {
@@ -181,9 +182,11 @@ public class SchedulerLogic {
                 time++;
                 continue;
             }
+
             int exec = Math.min(quantums[qIdx], p.remaining);
             if (p.start == -1) p.start = time;
-            blocks.add(new int[]{p.pid, time, time + exec});
+
+            blocks.add(new GanttBlock(p.pid, time, time + exec));
             time += exec;
             p.remaining -= exec;
             for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {

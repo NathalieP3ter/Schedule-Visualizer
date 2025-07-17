@@ -213,21 +213,19 @@ public class SchedulerLogic {
     }
 
     public static List<GanttBlock> runSJF(int[] arrival, int[] burst) {
-        // TODO Auto-generated method stub
+       
         throw new UnsupportedOperationException("Unimplemented method 'runSJF'");
     }
 
     public static List<GanttBlock> runRoundRobin(int[] arrival, int[] burst, int quantum) {
-        // TODO Auto-generated method stub
+       
         throw new UnsupportedOperationException("Unimplemented method 'runRoundRobin'");
     }
 
     public static List<GanttBlock> runSRTF(int[] arrival, int[] burst) {
-        // TODO Auto-generated method stub
+        
         throw new UnsupportedOperationException("Unimplemented method 'runSRTF'");
     }
 }
    
-
-
 

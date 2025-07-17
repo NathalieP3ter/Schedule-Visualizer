@@ -64,7 +64,7 @@ public class SchedulerLogic {
     //SRTF logic (preemptive)
 
     public static List<GanttBlock> runSRTF(List<Process> processes) {
-        List<int[]> blocks = new ArrayList<>();
+        List<GanttBlock> blocks = new ArrayList<>();
         List<Process> ready = new ArrayList<>();
         int time = 0, completed = 0, n = processes.size();
         Process current = null;
@@ -77,15 +77,17 @@ public class SchedulerLogic {
         .filter(p -> p.remaining > 0)
         .min(Comparator.comparingInt(p -> p.remaining))
         .orElse(null);
+
         if(next != null){
             if (current != next){
                 if (current != null && current.remaining > 0) {
-                    blocks.add(new int[]{current.pid, lastTime, time});
+                    blocks.add(new GanttBlock(current.pid, lastTime, time));
                 }
                 current = next;
                 lastTime = time;
                 if (current.start == -1) current.start = time;
             }
+
             next.remaining--;
             if (next.remaining == 0){
                 next.completion = time + 1;
@@ -94,6 +96,8 @@ public class SchedulerLogic {
                 completed++;
             }
             time ++;
+        } else {
+            time++;
         }
     }
         if (current != null && current.remaining > 0) {

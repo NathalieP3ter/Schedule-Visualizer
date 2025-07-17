@@ -25,6 +25,7 @@ public class SchedulerLogic {
         int time = 0;
         for (Process p : processes){
             if (time < p.arrival) time = p.arrival;
+            p.start = time;
             time += p.burst;
             p.completion = time;
             p.turnaround = p.completion - p.arrival;
@@ -221,7 +222,7 @@ public class SchedulerLogic {
         }
         Map<String, Double> avg = new HashMap<>();
         avg.put("avgWaiting", totalWT / processes.size());
-        avg.put("avgTurnaround", totalTAT / processes,size());
+        avg.put("avgTurnaround", totalTAT / processes.size());
         return avg;
     }
 }

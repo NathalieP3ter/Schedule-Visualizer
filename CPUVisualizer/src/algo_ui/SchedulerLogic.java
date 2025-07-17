@@ -1,12 +1,14 @@
 package CPUVisualizer.src.algo_ui;
 
 import java.util.*;
+import CPUVisualizer.src.algo_ui.GanttBlock;
 
 public class SchedulerLogic {
 
     public static class Process{
         public int pid,arrival,burst,remaining,completion,start;
         public int waiting,turnaround,response;
+
         public Process(int pid, int arrival,int burst) {
             this.pid =pid;
             this.arrival = arrival;
@@ -18,8 +20,8 @@ public class SchedulerLogic {
 
     //FIFO logic
 
-    public static List<int[]> runFIFO (List<Process> processes){
-        List<int[]>blocks = new ArrayList<>();
+    public static List<GanttBlock> runFIFO (List<Process> processes){
+        List<GanttBlock> blocks = new ArrayList<>();
         int time = 0;
         for (Process p : processes){
             if (time < p.arrival) time = p.arrival;

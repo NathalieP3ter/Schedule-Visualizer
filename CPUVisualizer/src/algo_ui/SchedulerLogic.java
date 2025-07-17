@@ -63,7 +63,7 @@ public class SchedulerLogic {
 
     //SRTF logic (preemptive)
 
-    public static List<int[]> runSRTF(List<Process> processes){
+    public static List<GanttBlock> runSRTF(List<Process> processes) {
         List<int[]> blocks = new ArrayList<>();
         List<Process> ready = new ArrayList<>();
         int time = 0, completed = 0, n = processes.size();

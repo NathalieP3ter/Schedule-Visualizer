@@ -48,7 +48,7 @@ public class SchedulerUI extends JFrame {
             processes.add(new SchedulerLogic.Process(i, arrival[i], burst[i]));
         }
 
-        List<int[]> rawBlocks = new ArrayList<>();
+        List<GanttBlock> rawBlocks = new ArrayList<>();
         switch (selectedAlgo) {
             case "FCFS":
                 rawBlocks = SchedulerLogic.runFIFO(new ArrayList<>(processes));
@@ -70,12 +70,6 @@ public class SchedulerUI extends JFrame {
                 break;
         }
 
-        // Convert int[] to GanttBlock
-        List<GanttBlock> result = new ArrayList<>();
-        for (int[] arr : rawBlocks) {
-            result.add(new GanttBlock(arr[0], arr[1], arr[2]));
-        }
-
-        chart.setBlocks(result);
+        chart.setBlocks(rawBlocks);
     }
 }

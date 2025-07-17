@@ -1,4 +1,4 @@
-package CPUVisualizer.src.ui;
+package CPUVisualizer.src.algo_ui;
 
 import java.util.*;
 

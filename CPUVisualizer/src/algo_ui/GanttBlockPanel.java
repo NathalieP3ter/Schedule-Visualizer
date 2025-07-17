@@ -1,4 +1,4 @@
-package CPUVisualizer.src.ui;
+package CPUVisualizer.src.algo_ui;
 
 public class GanttBlockPanel{
     public int pid, start, end;

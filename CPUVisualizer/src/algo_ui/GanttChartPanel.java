@@ -35,7 +35,6 @@ public class GanttChartPanel extends JPanel {
         }
 
         //final end time label
-        if (!blocks.isEmpty()) {
             g.drawString("" + blocks.get(blocks.size() - 1).end, x - 5, 100);
         }
     }

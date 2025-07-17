@@ -2,13 +2,18 @@ package CPUVisualizer.src.algo_ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.*;
 import java.util.List;
 
 public class SchedulerUI extends JFrame {
     private GanttChartPanel chart = new GanttChartPanel();
     private JComboBox<String> algorithmSelector;
-    private JTextField quantumField;
+    private JTextField quantumField, jobCountField;
+    private JLabel cpuLabel, algoLabel; 
+    private JTextArea jobQueueArea; // ang kani kay ang order sa  processes nga iprioritize
+    private JLabel avgWTLabel, averageTALabel, totalExecuteLabel; // kani kay waiting, turnaround ug ang total executtion time
+    private JTable jobTable; 
 
     public SchedulerUI() {
         setTitle("CPU Scheduling Visualizer");

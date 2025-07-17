@@ -35,8 +35,8 @@ public class SchedulerLogic {
     }
     //SJF logic (non-preemptive)
 
-    public static List<int[]> runSJF(List<Process> processes){
-        List<int[]> blocks = new ArrayList<>();
+    public static List<GanttBlock> runSJF(List<Process> processes) {
+        List<GanttBlock> blocks = new ArrayList<>();
         int time = 0;
         while (!processes.isEmpty()) {
             Process next = null;

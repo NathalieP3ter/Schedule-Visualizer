@@ -29,7 +29,7 @@ public class SchedulerLogic {
             p.completion = time;
             p.turnaround = p.completion - p.arrival;
             p.waiting = p.start - p.arrival;
-            blocks.add (new int[]{p.pid, p.start,p.completion});
+            blocks.add (new GanttBlock(p.pid, p.start, p.completion));
         }
         return blocks;
     }

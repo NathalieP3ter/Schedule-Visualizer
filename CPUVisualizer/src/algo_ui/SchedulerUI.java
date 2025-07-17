@@ -28,7 +28,7 @@ public class SchedulerUI extends JFrame {
     }
 
 private void initControls() {
-    JPanel cpntrolPanel = new JPanel(new FlowLayout());
+     JPanel cpntrolPanel = new JPanel(new FlowLayout());
     controlPanel.setBackground(Color.LIGHT_GRAY);
     String[] algorithms = {"FIFO", "SJF", "RR", "SRTF, MLFQ"};
     algorithmSelector = new JComboBox<>(algorithms);
@@ -49,8 +49,9 @@ private void initControls() {
     controlPanel.add(simulateButton);
 
     add(controlPanel, BorderLayout.NORTH);
-  
 }
+   
+  
 
 
         /*  Top panel for controls

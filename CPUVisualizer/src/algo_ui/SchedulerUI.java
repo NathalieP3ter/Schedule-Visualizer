@@ -11,9 +11,9 @@ public class SchedulerUI extends JFrame {
     private JComboBox<String> algorithmSelector;
     private JTextField quantumField, jobCountField;
     private JLabel cpuLabel, algoLabel; 
-    private JTextArea jobQueueArea; // ang kani kay ang order sa  processes nga iprioritize
+    private JTextArea readyQueueArea; // ang kani kay ang order sa  processes nga iprioritize
     private JLabel avgWTLabel, averageTALabel, totalExecuteLabel; // kani kay waiting, turnaround ug ang total executtion time
-    private JTable jobTable; 
+    private JTable processTable; 
 
     public SchedulerUI() {
         setTitle("CPU Scheduling Visualizer");
@@ -23,16 +23,34 @@ public class SchedulerUI extends JFrame {
         getContentPane().setBackground(Color.BLUE);
 
         initControls();
-        initDashBoard();
+        initDashboard();
         setVisible(true);
     }
 
+private void initControls() {
+    JPanel cpntrolPanel = new JPanel(new FlowLayout());
+    controlPanel.setBackground(Color.LIGHT_GRAY);
+    String[] algorithms = {"FIFO", "SJF", "RR", "SRTF, MLFQ"};
+    algorithmSelector = new JComboBox<>(algorithms);
+    quantumField = new JTextField("2", 5);
+    jobCountField = new JTextField("3", 5);
+    JButton fileBtn = new JButton ("Pick file");
+    JButton simulateButton = new JButton("Simulate");
 
+    simulateButton.addActionListener(event -> simulate());
 
+    controlPanel.add(new JLabel("Algorithm:"));
+    controlPanel.add(algorithmSelector);
+    controlPanel.add(new JLabel("Quantum (for RR):"));
+    controlPanel.add(quantumField);
+    controlPanel.add(new JLabel("Job Count:"));
+    controlPanel.add(jobCountField);
+    controlPanel.add(fileBtn);
+    controlPanel.add(simulateButton);
 
-
-
-
+    add(controlPanel, BorderLayout.NORTH);
+  
+}
 
         /*  Top panel for controls
         JPanel controlPanel = new JPanel(new FlowLayout());

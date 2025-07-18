@@ -23,7 +23,7 @@ public class SchedulerLogic {
 
         for (Process p : processes) {
             time = Math.max(time, p.arrival);
-            p.start = time;                           // ✅ Corrected
+            p.start = time;
             p.response = time - p.arrival;
             time += p.burst;
             p.completion = time;
@@ -39,6 +39,8 @@ public class SchedulerLogic {
         List<GanttBlock> result = new ArrayList<>();
         List<Process> queue = new ArrayList<>();
         int time = 0;
+
+        processes.sort(Comparator.comparingInt(p -> p.arrival));
 
         while (!processes.isEmpty() || !queue.isEmpty()) {
             for (Iterator<Process> it = processes.iterator(); it.hasNext();) {
@@ -56,7 +58,9 @@ public class SchedulerLogic {
 
             queue.sort(Comparator.comparingInt(p -> p.burst));
             Process p = queue.remove(0);
-            p.start = time;                           // ✅ Corrected
+
+            time = Math.max(time, p.arrival);
+            p.start = time;
             p.response = time - p.arrival;
             time += p.burst;
             p.completion = time;

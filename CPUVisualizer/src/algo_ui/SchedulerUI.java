@@ -3,11 +3,12 @@ package CPUVisualizer.src.algo_ui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class SchedulerUI extends JFrame {
-    private JComboBox<String> algorithmSelector;
-    private JComboBox<String> extensionSelector;
+    private JComboBox<String> algorithmSelector, extensionSelector;
     private JTextField quantumField, processCountField;
     private JSlider speedSlider;
     private JCheckBox stepMode;
@@ -22,7 +23,8 @@ public class SchedulerUI extends JFrame {
         setSize(1350, 750);
         setLocationRelativeTo(null);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildControlPanel(), buildOutputPanel());
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
+                buildControlPanel(), buildOutputPanel());
         splitPane.setDividerLocation(340);
         add(splitPane);
 
@@ -36,11 +38,16 @@ public class SchedulerUI extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Controls"));
 
         algorithmSelector = new JComboBox<>(new String[]{"FCFS", "SJF", "SRTF", "RR", "MLFQ"});
-        extensionSelector = new JComboBox<>(new String[]{".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"});
+        extensionSelector = new JComboBox<>(new String[]{
+                ".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"
+        });
+
         quantumField = new JTextField("2");
         processCountField = new JTextField("3");
-        quantumField.setMaximumSize(new Dimension(80, 25));
-        processCountField.setMaximumSize(new Dimension(80, 25));
+
+        quantumField.setMaximumSize(new Dimension(100, 25));
+        processCountField.setMaximumSize(new Dimension(100, 25));
+
         speedSlider = new JSlider(10, 1000, 300);
         stepMode = new JCheckBox("Enable Step-by-Step");
 
@@ -69,17 +76,19 @@ public class SchedulerUI extends JFrame {
             }
 
             String selected = extensionSelector.getSelectedItem().toString();
-            JOptionPane.showMessageDialog(this, "Generated " + count + " processes\nUsing: " + selected, "Random", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this,
+                    "Generated " + count + " processes\nExtension selected: " + selected,
+                    "Random Generator", JOptionPane.INFORMATION_MESSAGE);
         });
 
         JButton simulateBtn = new JButton("▶️ Simulate");
         simulateBtn.addActionListener(e -> simulate());
 
-        panel.add(new JLabel("Algorithm:"));      panel.add(algorithmSelector);
-        panel.add(new JLabel("Time Quantum:"));    panel.add(quantumField);
-        panel.add(new JLabel("Process Count:"));   panel.add(processCountField);
-        panel.add(new JLabel("Extension:"));       panel.add(extensionSelector);
-        panel.add(new JLabel("Step Delay (ms):")); panel.add(speedSlider);
+        panel.add(new JLabel("Algorithm:"));         panel.add(algorithmSelector);
+        panel.add(new JLabel("Time Quantum:"));       panel.add(quantumField);
+        panel.add(new JLabel("Process Count:"));      panel.add(processCountField);
+        panel.add(new JLabel("File Extension:"));     panel.add(extensionSelector);
+        panel.add(new JLabel("Step Delay (ms):"));    panel.add(speedSlider);
         panel.add(stepMode);
         panel.add(Box.createVerticalStrut(10));
         panel.add(addRow);
@@ -93,19 +102,28 @@ public class SchedulerUI extends JFrame {
         JPanel panel = new JPanel(new BorderLayout());
 
         inputTable = new JTable(new DefaultTableModel(new Object[]{"PID", "Arrival", "Burst"}, 0));
-        outputTable = new JTable(new DefaultTableModel(new Object[]{"PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"}, 0));
+        outputTable = new JTable(new DefaultTableModel(new Object[]{
+                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"
+        }, 0));
 
-        JPanel tables = new JPanel(new GridLayout(1, 2));
-        tables.add(new JScrollPane(inputTable));
-        tables.add(new JScrollPane(outputTable));
+        JScrollPane inputScroll = new JScrollPane(inputTable);
+        inputScroll.setBorder(BorderFactory.createTitledBorder("Input Table"));
+
+        JScrollPane outputScroll = new JScrollPane(outputTable);
+        outputScroll.setBorder(BorderFactory.createTitledBorder("Metrics"));
 
         chartScroll = new JScrollPane(chartPanel);
         chartScroll.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
 
-        JSplitPane vSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tables, chartScroll);
-        vSplit.setDividerLocation(250);
-        panel.add(vSplit, BorderLayout.CENTER);
+        JPanel tables = new JPanel(new GridLayout(1, 2));
+        tables.add(inputScroll);
+        tables.add(outputScroll);
 
+        JSplitPane verticalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                tables, chartScroll);
+        verticalSplit.setDividerLocation(250);
+
+        panel.add(verticalSplit, BorderLayout.CENTER);
         return panel;
     }
 
@@ -131,7 +149,6 @@ public class SchedulerUI extends JFrame {
         try {
             quantum = Integer.parseInt(quantumField.getText());
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid quantum. Using default: 2");
             quantum = 2;
         }
 

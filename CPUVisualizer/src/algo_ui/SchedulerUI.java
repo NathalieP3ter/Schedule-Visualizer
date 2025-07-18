@@ -8,7 +8,10 @@ import java.util.List;
 public class SchedulerUI extends JFrame {
     private GanttChartPanel chart = new GanttChartPanel();
     private JComboBox<String> algorithmSelector;
-    private JTextField quantumField;
+    private JComboBox<String> extensionSelector;
+    private JTextField quantumField, processCountField;
+    private JButton simulateBtn, generateRandomBtn;
+    private List<SchedulerLogic.Process> currentProcesses = new ArrayList<>();
 
 
     public SchedulerUI() {
@@ -71,8 +74,6 @@ public class SchedulerUI extends JFrame {
 
         chart.setBlocks(rawBlocks);
     }
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(SchedulerUI::new);
-    }   
+   
 
 }

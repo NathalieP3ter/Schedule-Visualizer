@@ -13,26 +13,35 @@ public class SchedulerUI extends JFrame {
     private JButton simulateBtn, generateRandomBtn;
     private List<SchedulerLogic.Process> currentProcesses = new ArrayList<>();
 
-
     public SchedulerUI() {
-     JPanel controlPanel = new JPanel(new FlowLayout());
+        setTitle("CPU Scheduling Visualizer");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        // Control Panel Layout
+        JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+        // Algorithm selector
         String[] algorithms = {"FCFS", "SJF", "RR", "SRTF"};
         algorithmSelector = new JComboBox<>(algorithms);
 
+        // Extension formats (symbolic)
         String[] extensions = {".txt", ".csv", ".log", ".xml"};
         extensionSelector = new JComboBox<>(extensions);
 
+        // Quantum + process count fields
         quantumField = new JTextField("2", 5);
         processCountField = new JTextField("3", 5);
 
+        // Buttons
         simulateBtn = new JButton("Simulate");
         simulateBtn.addActionListener(e -> simulate());
 
         generateRandomBtn = new JButton("Generate Random");
         generateRandomBtn.addActionListener(e -> generateRandomProcesses());
 
+        // Add controls to panel
         controlPanel.add(new JLabel("Algorithm:"));
         controlPanel.add(algorithmSelector);
         controlPanel.add(new JLabel("Quantum (RR):"));
@@ -44,12 +53,17 @@ public class SchedulerUI extends JFrame {
         controlPanel.add(generateRandomBtn);
         controlPanel.add(simulateBtn);
 
+        // Add to frame
         add(controlPanel, BorderLayout.NORTH);
         add(chart, BorderLayout.CENTER);
-        setVisible(true);
 
+        // Fix window layout and size
+        setPreferredSize(new Dimension(1200, 700));
+        pack();
+        setLocationRelativeTo(null); // Center on screen
+        setVisible(true);
     }
-    
+
     private void generateRandomProcesses() {
         int count;
         try {
@@ -73,14 +87,13 @@ public class SchedulerUI extends JFrame {
             "Generated " + count + " random processes\nExtension selected: " + extension,
             "Random Generation", JOptionPane.INFORMATION_MESSAGE);
     }
-    
-    private void simulate(){
+
+    private void simulate() {
         String selectedAlgo = (String) algorithmSelector.getSelectedItem();
         List<GanttBlock> rawBlocks = new ArrayList<>();
         List<SchedulerLogic.Process> cloneList = new ArrayList<>();
 
         if (currentProcesses.isEmpty()) {
-            // default static list
             int[] arrival = {0, 2, 4};
             int[] burst = {5, 3, 1};
             for (int i = 0; i < arrival.length; i++) {
@@ -117,6 +130,10 @@ public class SchedulerUI extends JFrame {
                 break;
         }
 
-        chart.setBlocks(rawBlocks);
+        chart.animateBlocks(rawBlocks); // ✨ Animated rendering
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(SchedulerUI::new);
     }
 }

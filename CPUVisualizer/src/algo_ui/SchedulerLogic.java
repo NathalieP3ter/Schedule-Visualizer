@@ -4,42 +4,42 @@ import java.util.*;
 
 public class SchedulerLogic {
 
-    public static class Process{
-        public static id, arrival, burst, remaining;
+    public static class Process {
+        public int id, arrival, burst, remaining;
+        public int start = -1, completion = 0, waiting = 0, turnaround = 0;
 
         public Process(int id, int arrival, int burst) {
-           this.id = id;
-           this.arrival = arrival;
-           this.burst = burst;
-           this.remaining = burst; // for preemptive algorithms
+            this.id = id;
+            this.arrival = arrival;
+            this.burst = burst;
+            this.remaining = burst;
         }
     }
-
     //FIFO logic
 
-    public static List<GanttBlock> runFIFO (List<Process> processes){
+   public static List<GanttBlock> runFIFO(List<Process> processes) {
         processes.sort(Comparator.comparingInt(p -> p.arrival));
-        List<GanttBlock> blocks = new ArrayList<>();
+        List<GanttBlock> result = new ArrayList<>();
         int time = 0;
 
-         for (Process p : processes) {
+        for (Process p : processes) {
             if (time < p.arrival) time = p.arrival;
             result.add(new GanttBlock(p.id, time, time + p.burst));
             time += p.burst;
         }
-
         return result;
     }
 
+
     //SJF logic (non-preemptive)
 
-    public static List<GanttBlock> runSJF(List<Process> processes) {
+     public static List<GanttBlock> runSJF(List<Process> processes) {
         List<GanttBlock> result = new ArrayList<>();
         List<Process> queue = new ArrayList<>();
         int time = 0;
 
         while (!processes.isEmpty() || !queue.isEmpty()) {
-            for (Iterator<Process> it = processes.iterator(); it.hasNext();) {
+            for (Iterator<Process> it = processes.iterator(); it.hasNext(); ) {
                 Process p = it.next();
                 if (p.arrival <= time) {
                     queue.add(p);
@@ -57,9 +57,9 @@ public class SchedulerLogic {
             result.add(new GanttBlock(p.id, time, time + p.burst));
             time += p.burst;
         }
-
         return result;
     }
+
 
     //SRTF logic (preemptive)
 
@@ -68,7 +68,6 @@ public class SchedulerLogic {
         List<Process> ready = new ArrayList<>();
         int time = 0;
         Process current = null;
-        int start = 0;
 
         processes.sort(Comparator.comparingInt(p -> p.arrival));
 
@@ -90,7 +89,7 @@ public class SchedulerLogic {
             ready.sort(Comparator.comparingInt(p -> p.remaining));
             current = ready.remove(0);
 
-            if (result.size() > 0 && result.get(result.size() - 1).pid == current.id) {
+            if (!result.isEmpty() && result.get(result.size() - 1).pid == current.id) {
                 result.get(result.size() - 1).end++;
             } else {
                 result.add(new GanttBlock(current.id, time, time + 1));
@@ -99,15 +98,13 @@ public class SchedulerLogic {
             current.remaining--;
             if (current.remaining == 0) {
                 current = null;
-            } else {
-                start = time + 1;
             }
 
             time++;
         }
-
         return result;
     }
+
     //Round Robin logic
     public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
         List<GanttBlock> result = new ArrayList<>();
@@ -148,19 +145,22 @@ public class SchedulerLogic {
         List<GanttBlock> blocks = new ArrayList<>();
         List<Queue<Process>> queues = new ArrayList<>();
         for (int i = 0; i < numQueues; i++) queues.add(new LinkedList<>());
- 
+
         int time = 0, completed = 0, n = processes.size();
         List<Process> arrived = new ArrayList<>(processes);
+
         while (completed < n) {
-            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext(); ) {
                 Process p = it.next();
                 if (p.arrival <= time) {
                     queues.get(0).add(p);
                     it.remove();
                 }
             }
+
             Process p = null;
             int qIdx = -1;
+
             for (int i = 0; i < numQueues; i++) {
                 if (!queues.get(i).isEmpty()) {
                     p = queues.get(i).poll();
@@ -168,6 +168,7 @@ public class SchedulerLogic {
                     break;
                 }
             }
+
             if (p == null) {
                 time++;
                 continue;
@@ -176,16 +177,18 @@ public class SchedulerLogic {
             int exec = Math.min(quantums[qIdx], p.remaining);
             if (p.start == -1) p.start = time;
 
-            blocks.add(new GanttBlock(p.pid, time, time + exec));
+            blocks.add(new GanttBlock(p.id, time, time + exec));
             time += exec;
             p.remaining -= exec;
-            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+
+            for (Iterator<Process> it = arrived.iterator(); it.hasNext(); ) {
                 Process q = it.next();
                 if (q.arrival <= time) {
                     queues.get(0).add(q);
                     it.remove();
                 }
             }
+
             if (p.remaining > 0) {
                 if (qIdx < numQueues - 1) {
                     queues.get(qIdx + 1).add(p);
@@ -199,6 +202,7 @@ public class SchedulerLogic {
                 completed++;
             }
         }
+
         return blocks;
     }
 
@@ -215,4 +219,3 @@ public class SchedulerLogic {
         return avg;
     }
 }
-

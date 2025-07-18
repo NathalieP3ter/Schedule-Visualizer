@@ -4,171 +4,165 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
-import java.util.List;
+import java.util.Random;
 
 public class SchedulerUI extends JFrame {
-    private JComboBox<String> algorithmSelector;
-    private JTextField quantumField;
-    private JTextField jobCountField;
-    private JTable inputTable;
+    private JComboBox<String> algorithmComboBox;
+    private JComboBox<String> fileExtensionComboBox;
+    private JTextField jobCountField, quantumField;
+    private JLabel cpuStatusLabel, avgWaitingLabel, avgTurnaroundLabel, totalExecLabel;
+    private JTextArea readyQueueArea;
     private JTable metricsTable;
     private GanttChartPanel ganttChartPanel;
-    private SchedulerLogic scheduler;
-    private JLabel cpuStatus;
-    private JLabel readyQueueLabel;
-    private JLabel avgWaitLabel, avgTurnaroundLabel, totalExecLabel;
+
+    private SchedulerLogic schedulerLogic;
+
+    private static final String[] ALGORITHMS = {"FIFO", "SJF", "SRTF", "Round Robin", "MLFQ"};
+    private static final String[] FILE_EXTENSIONS = {".txt", ".csv", ".xml", ".log", ".json", ".dat", ".html"};
 
     public SchedulerUI() {
         setTitle("Kaur Peter CPU Scheduling Visualizer");
-        setSize(1100, 700);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        scheduler = new SchedulerLogic();
-        initUI();
-    }
+        schedulerLogic = new SchedulerLogic();
 
-    private void initUI() {
-        JPanel topPanel = new JPanel(new FlowLayout());
+        // Top control panel
+        JPanel controlPanel = new JPanel(new GridLayout(3, 1));
+        JPanel topRow = new JPanel();
+        JPanel midRow = new JPanel();
+        JPanel bottomRow = new JPanel();
 
-        algorithmSelector = new JComboBox<>(new String[]{"FIFO", "SJF", "SRTF", "RR"});
-        quantumField = new JTextField(5);
+        algorithmComboBox = new JComboBox<>(ALGORITHMS);
+        fileExtensionComboBox = new JComboBox<>(FILE_EXTENSIONS);
         jobCountField = new JTextField(5);
-        JButton fileButton = new JButton("Select File");
-        JButton runButton = new JButton("Run");
-        JButton resetButton = new JButton("Reset");
+        quantumField = new JTextField(5);
+        quantumField.setVisible(false);
 
-        topPanel.add(new JLabel("Algorithm:"));
-        topPanel.add(algorithmSelector);
-        topPanel.add(new JLabel("Quantum:"));
-        topPanel.add(quantumField);
-        topPanel.add(new JLabel("Jobs:"));
-        topPanel.add(jobCountField);
-        topPanel.add(fileButton);
-        topPanel.add(runButton);
-        topPanel.add(resetButton);
+        algorithmComboBox.addActionListener(e -> {
+            String selected = (String) algorithmComboBox.getSelectedItem();
+            quantumField.setVisible(selected.equals("Round Robin") || selected.equals("MLFQ"));
+            pack();
+        });
 
-        add(topPanel, BorderLayout.NORTH);
+        JButton generateBtn = new JButton("Generate Random");
+        JButton runBtn = new JButton("Run");
+        JButton resetBtn = new JButton("Reset");
 
-        JPanel centerPanel = new JPanel(new GridLayout(2, 1));
+        generateBtn.addActionListener(e -> generateRandom());
+        runBtn.addActionListener(e -> runScheduler());
+        resetBtn.addActionListener(e -> reset());
 
-        // CPU Box and Ready Queue
-        JPanel statusPanel = new JPanel(new GridLayout(1, 2));
-        cpuStatus = new JLabel("CPU: Idle", SwingConstants.CENTER);
-        cpuStatus.setFont(new Font("Arial", Font.BOLD, 16));
-        cpuStatus.setBorder(BorderFactory.createTitledBorder("CPU Status"));
-        readyQueueLabel = new JLabel("Ready Queue: []", SwingConstants.CENTER);
-        readyQueueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        readyQueueLabel.setBorder(BorderFactory.createTitledBorder("Ready Queue"));
-        statusPanel.add(cpuStatus);
-        statusPanel.add(readyQueueLabel);
-        centerPanel.add(statusPanel);
+        topRow.add(new JLabel("Algorithm:"));
+        topRow.add(algorithmComboBox);
+        topRow.add(new JLabel("Quantum:"));
+        topRow.add(quantumField);
+        topRow.add(new JLabel("File Type:"));
+        topRow.add(fileExtensionComboBox);
+        topRow.add(new JLabel("Jobs:"));
+        topRow.add(jobCountField);
+        topRow.add(generateBtn);
+        topRow.add(runBtn);
+        topRow.add(resetBtn);
 
-        // Gantt Chart Panel
+        cpuStatusLabel = new JLabel("CPU Status: Idle");
+        readyQueueArea = new JTextArea(2, 20);
+        readyQueueArea.setEditable(false);
+        readyQueueArea.setBorder(BorderFactory.createTitledBorder("Ready Queue"));
+
+        midRow.add(cpuStatusLabel);
+        midRow.add(new JScrollPane(readyQueueArea));
+
+        avgWaitingLabel = new JLabel("Avg Waiting Time: ");
+        avgTurnaroundLabel = new JLabel("Avg Turnaround Time: ");
+        totalExecLabel = new JLabel("Total Execution Time: ");
+
+        bottomRow.add(avgWaitingLabel);
+        bottomRow.add(avgTurnaroundLabel);
+        bottomRow.add(totalExecLabel);
+
+        controlPanel.add(topRow);
+        controlPanel.add(midRow);
+        controlPanel.add(bottomRow);
+        add(controlPanel, BorderLayout.NORTH);
+
+        // Gantt chart
         ganttChartPanel = new GanttChartPanel();
-        ganttChartPanel.setPreferredSize(new Dimension(1000, 100));
-        ganttChartPanel.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
-        centerPanel.add(ganttChartPanel);
+        ganttChartPanel.setPreferredSize(new Dimension(800, 150));
+        add(ganttChartPanel, BorderLayout.CENTER);
 
-        add(centerPanel, BorderLayout.CENTER);
-
-        // Bottom Panel (Tables)
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-
-        // Input Table
-        inputTable = new JTable(new DefaultTableModel(new Object[]{"PID", "Arrival", "Burst"}, 0));
-        JScrollPane inputScrollPane = new JScrollPane(inputTable);
-        inputScrollPane.setBorder(BorderFactory.createTitledBorder("Job Input"));
-        inputScrollPane.setPreferredSize(new Dimension(500, 120));
-
-        // Metrics Table
+        // Metrics table
         metricsTable = new JTable(new DefaultTableModel(
                 new Object[]{"PID", "Arrival", "Burst", "Start", "Completion", "Turnaround", "Waiting"}, 0
         ));
-        JScrollPane metricsScrollPane = new JScrollPane(metricsTable);
-        metricsScrollPane.setBorder(BorderFactory.createTitledBorder("Metrics"));
+        JScrollPane tableScroll = new JScrollPane(metricsTable);
+        add(tableScroll, BorderLayout.SOUTH);
 
-        // Metrics Averages
-        JPanel statsPanel = new JPanel(new GridLayout(3, 1));
-        avgWaitLabel = new JLabel("Average Waiting Time: ");
-        avgTurnaroundLabel = new JLabel("Average Turnaround Time: ");
-        totalExecLabel = new JLabel("Total Execution Time: ");
-        statsPanel.add(avgWaitLabel);
-        statsPanel.add(avgTurnaroundLabel);
-        statsPanel.add(totalExecLabel);
-
-        JPanel metricsContainer = new JPanel(new BorderLayout());
-        metricsContainer.add(metricsScrollPane, BorderLayout.CENTER);
-        metricsContainer.add(statsPanel, BorderLayout.SOUTH);
-
-        bottomPanel.add(inputScrollPane, BorderLayout.WEST);
-        bottomPanel.add(metricsContainer, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
-
-        // Button actions
-        runButton.addActionListener(e -> runScheduler());
-        resetButton.addActionListener(e -> resetUI());
-        fileButton.addActionListener(e -> loadFromFile());
+        pack();
+        setLocationRelativeTo(null);
+        setVisible(true);
     }
 
-    private void runScheduler() {
-        scheduler.loadProcessesFromTable(inputTable);
-        String algo = (String) algorithmSelector.getSelectedItem();
-        int quantum = 0;
+    private void generateRandom() {
         try {
-            quantum = Integer.parseInt(quantumField.getText().trim());
-        } catch (NumberFormatException ignored) {}
-        List<SchedulerLogic.GanttBlock> blocks = scheduler.runAlgorithm(algo, quantum);
-        ganttChartPanel.setGanttBlocks(blocks);
-        scheduler.fillMetricsTable(metricsTable);
-
-        cpuStatus.setText("CPU: Running " + algo);
-        readyQueueLabel.setText("Ready Queue: Simulated");
-
-        avgWaitLabel.setText("Average Waiting Time: " + String.format("%.2f", scheduler.getAverageWaitingTime()));
-        avgTurnaroundLabel.setText("Average Turnaround Time: " + String.format("%.2f", scheduler.getAverageTurnaroundTime()));
-        totalExecLabel.setText("Total Execution Time: " + scheduler.getTotalExecutionTime());
-    }
-
-    private void resetUI() {
-        ((DefaultTableModel) inputTable.getModel()).setRowCount(0);
-        ((DefaultTableModel) metricsTable.getModel()).setRowCount(0);
-        ganttChartPanel.setGanttBlocks(null);
-        cpuStatus.setText("CPU: Idle");
-        readyQueueLabel.setText("Ready Queue: []");
-        avgWaitLabel.setText("Average Waiting Time: ");
-        avgTurnaroundLabel.setText("Average Turnaround Time: ");
-        totalExecLabel.setText("Total Execution Time: ");
-    }
-
-    private void loadFromFile() {
-        JFileChooser chooser = new JFileChooser();
-        int returnVal = chooser.showOpenDialog(this);
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            File file = chooser.getSelectedFile();
-            try {
-                List<String> lines = java.nio.file.Files.readAllLines(file.toPath());
-                DefaultTableModel model = (DefaultTableModel) inputTable.getModel();
-                model.setRowCount(0);
-                int pid = 1;
-                for (String line : lines) {
-                    String[] parts = line.split("\\s+");
-                    if (parts.length >= 2) {
-                        int arrival = Integer.parseInt(parts[0]);
-                        int burst = Integer.parseInt(parts[1]);
-                        model.addRow(new Object[]{pid++, arrival, burst});
-                    }
-                }
-                jobCountField.setText(String.valueOf(pid - 1));
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(this, "Error loading file.");
-            }
+            int num = Integer.parseInt(jobCountField.getText());
+            Random rand = new Random();
+            String randomExt = FILE_EXTENSIONS[rand.nextInt(FILE_EXTENSIONS.length)];
+            schedulerLogic.generateRandomProcesses(num, randomExt);
+            JOptionPane.showMessageDialog(this, "Generated " + num + " jobs (" + randomExt + ")");
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Invalid number of jobs.");
         }
     }
 
+    private void runScheduler() {
+        String algo = (String) algorithmComboBox.getSelectedItem();
+        int quantum = 0;
+        if (algo.equals("Round Robin") || algo.equals("MLFQ")) {
+            try {
+                quantum = Integer.parseInt(quantumField.getText());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Quantum must be a valid number.");
+                return;
+            }
+        }
+
+        schedulerLogic.run(algo, quantum);
+
+        // Animate Gantt chart
+        ganttChartPanel.setGanttData(schedulerLogic.getGanttBlocks());
+        ganttChartPanel.animateBlocks(400);
+
+        // CPU status and ready queue
+        cpuStatusLabel.setText("CPU Status: " + schedulerLogic.getCurrentCPUStatus());
+        readyQueueArea.setText(schedulerLogic.getReadyQueueString());
+
+        // Metrics table
+        DefaultTableModel model = (DefaultTableModel) metricsTable.getModel();
+        model.setRowCount(0);
+        for (SchedulerLogic.Process p : schedulerLogic.getProcesses()) {
+            model.addRow(new Object[]{p.pid, p.arrival, p.burst, p.start, p.completion, p.turnaround, p.waiting});
+        }
+
+        avgWaitingLabel.setText("Avg Waiting Time: " + schedulerLogic.getAverageWaitingTime());
+        avgTurnaroundLabel.setText("Avg Turnaround Time: " + schedulerLogic.getAverageTurnaroundTime());
+        totalExecLabel.setText("Total Execution Time: " + schedulerLogic.getTotalExecutionTime());
+    }
+
+    private void reset() {
+        jobCountField.setText("");
+        quantumField.setText("");
+        ((DefaultTableModel) metricsTable.getModel()).setRowCount(0);
+        ganttChartPanel.setGanttData(null);
+        ganttChartPanel.repaint();
+        cpuStatusLabel.setText("CPU Status: Idle");
+        readyQueueArea.setText("");
+        avgWaitingLabel.setText("Avg Waiting Time: ");
+        avgTurnaroundLabel.setText("Avg Turnaround Time: ");
+        totalExecLabel.setText("Total Execution Time: ");
+    }
+
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new SchedulerUI().setVisible(true));
+        SwingUtilities.invokeLater(SchedulerUI::new);
     }
 }

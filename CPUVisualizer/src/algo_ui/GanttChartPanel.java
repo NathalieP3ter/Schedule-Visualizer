@@ -5,59 +5,56 @@ import java.awt.*;
 import java.util.List;
 
 public class GanttChartPanel extends JPanel {
-    private List<SchedulerLogic.GanttBlock> blocks;
-    private int currentAnimationIndex = 0;
+    private List<SchedulerLogic.GanttBlock> ganttData;
+    private int animatedIndex = 0;
+    private Timer animationTimer;
 
-    public void setGanttBlocks(List<SchedulerLogic.GanttBlock> blocks) {
-        this.blocks = blocks;
-        this.currentAnimationIndex = 0;
-        repaint();
-        animateBlocks();
+    public void setGanttData(List<SchedulerLogic.GanttBlock> data) {
+        this.ganttData = data;
+        this.animatedIndex = 0;
     }
 
-    private void animateBlocks() {
-        Timer timer = new Timer(500, e -> {
-            if (currentAnimationIndex < blocks.size()) {
-                currentAnimationIndex++;
-                repaint();
-            } else {
-                ((Timer) e.getSource()).stop();
+    public void animateBlocks(int delay) {
+        if (ganttData == null || ganttData.isEmpty()) return;
+
+        animatedIndex = 0;
+        animationTimer = new Timer(delay, e -> {
+            animatedIndex++;
+            repaint();
+            if (animatedIndex >= ganttData.size()) {
+                animationTimer.stop();
             }
         });
-        timer.start();
+        animationTimer.start();
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (blocks == null || blocks.isEmpty()) return;
-
-        int blockWidth = 60;
-        int blockHeight = 40;
-        int gap = 10;
-        int x = 10;
-        int y = 20;
+        if (ganttData == null) return;
 
         Graphics2D g2 = (Graphics2D) g;
-        g2.setFont(new Font("Arial", Font.BOLD, 12));
+        g2.setFont(new Font("SansSerif", Font.BOLD, 12));
+        int x = 20;
+        int y = 30;
+        int height = 40;
+        int scale = 20;
 
-        for (int i = 0; i < currentAnimationIndex; i++) {
-            SchedulerLogic.GanttBlock block = blocks.get(i);
-            int width = (block.end - block.start) * blockWidth / 2;
-            g2.setColor(new Color(100 + (i * 30) % 155, 100, 200));
-            g2.fillRect(x, y, width, blockHeight);
+        for (int i = 0; i < animatedIndex && i < ganttData.size(); i++) {
+            SchedulerLogic.GanttBlock block = ganttData.get(i);
+            int width = (block.end - block.start) * scale;
+            g2.setColor(Color.CYAN);
+            g2.fillRect(x, y, width, height);
             g2.setColor(Color.BLACK);
-            g2.drawRect(x, y, width, blockHeight);
-            g2.drawString(block.pid, x + width / 2 - 10, y + 25);
-            g2.drawString("" + block.start, x, y + blockHeight + 15);
-            x += width + gap;
+            g2.drawRect(x, y, width, height);
+            g2.drawString("P" + block.pid, x + width / 2 - 10, y + height / 2);
+            g2.drawString("" + block.start, x - 5, y + height + 15);
+            x += width;
         }
 
-        // Draw the final end time
-        if (currentAnimationIndex == blocks.size() && !blocks.isEmpty()) {
-            SchedulerLogic.GanttBlock last = blocks.get(blocks.size() - 1);
-            int finalX = x - gap;
-            g2.drawString("" + last.end, finalX, y + blockHeight + 15);
+        if (animatedIndex == ganttData.size() && !ganttData.isEmpty()) {
+            SchedulerLogic.GanttBlock last = ganttData.get(ganttData.size() - 1);
+            g2.drawString("" + last.end, x - 5, y + height + 15);
         }
     }
 }

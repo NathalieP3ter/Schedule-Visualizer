@@ -22,13 +22,14 @@ public class SchedulerLogic {
         int time = 0;
 
         for (Process p : processes) {
-            if (time < p.arrival) time = p.arrival;
+            time = Math.max(time, p.arrival);
+            p.start = time;                           // ✅ Corrected
             p.response = time - p.arrival;
-            p.completion = time + p.burst;
+            time += p.burst;
+            p.completion = time;
             p.turnaround = p.completion - p.arrival;
             p.waiting = p.turnaround - p.burst;
-            result.add(new GanttBlock(p.id, time, time + p.burst));
-            time += p.burst;
+            result.add(new GanttBlock(p.id, p.start, p.completion));
         }
 
         return result;
@@ -55,13 +56,13 @@ public class SchedulerLogic {
 
             queue.sort(Comparator.comparingInt(p -> p.burst));
             Process p = queue.remove(0);
-            if (p.response == -1) p.response = time - p.arrival;
-            p.completion = time + p.burst;
+            p.start = time;                           // ✅ Corrected
+            p.response = time - p.arrival;
+            time += p.burst;
+            p.completion = time;
             p.turnaround = p.completion - p.arrival;
             p.waiting = p.turnaround - p.burst;
-
-            result.add(new GanttBlock(p.id, time, time + p.burst));
-            time += p.burst;
+            result.add(new GanttBlock(p.id, p.start, p.completion));
         }
 
         return result;

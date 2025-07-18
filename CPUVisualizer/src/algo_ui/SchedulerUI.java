@@ -15,7 +15,7 @@ public class SchedulerUI extends JFrame {
 
 
     public SchedulerUI() {
-     Panel controlPanel = new JPanel(new FlowLayout());
+     JPanel controlPanel = new JPanel(new FlowLayout());
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         String[] algorithms = {"FCFS", "SJF", "RR", "SRTF"};

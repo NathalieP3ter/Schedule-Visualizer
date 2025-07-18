@@ -21,44 +21,44 @@ public class SchedulerLogic {
         processes.sort(Comparator.comparingInt(p -> p.arrival));
         List<GanttBlock> blocks = new ArrayList<>();
         int time = 0;
-        
-        for (Process p : processes){
+
+         for (Process p : processes) {
             if (time < p.arrival) time = p.arrival;
-            p.start = time;
+            result.add(new GanttBlock(p.id, time, time + p.burst));
             time += p.burst;
-            p.completion = time;
-            p.turnaround = p.completion - p.arrival;
-            p.waiting = p.start - p.arrival;
-            blocks.add (new GanttBlock(p.pid, p.start, p.completion));
         }
-        return blocks;
+
+        return result;
     }
+
     //SJF logic (non-preemptive)
 
     public static List<GanttBlock> runSJF(List<Process> processes) {
-        List<GanttBlock> blocks = new ArrayList<>();
+        List<GanttBlock> result = new ArrayList<>();
+        List<Process> queue = new ArrayList<>();
         int time = 0;
-        while (!processes.isEmpty()) {
-            Process next = null;
-            for (Process p : processes) {
-                if (p.arrival <= time && (next == null || p.burst < next.burst)) {
-                    next = p;
+
+        while (!processes.isEmpty() || !queue.isEmpty()) {
+            for (Iterator<Process> it = processes.iterator(); it.hasNext();) {
+                Process p = it.next();
+                if (p.arrival <= time) {
+                    queue.add(p);
+                    it.remove();
                 }
             }
-            if (next == null) {
+
+            if (queue.isEmpty()) {
                 time++;
                 continue;
             }
-            if (time < next.arrival) time = next.arrival;
-            next.start = time;
-            time+= next.burst;
-            next.completion = time;
-            next.turnaround = next.completion - next.arrival;
-            next.waiting = next.turnaround - next.burst;
-            blocks.add(new GanttBlock(next.pid, next.start, next.completion));  
-            processes.remove(next);
+
+            queue.sort(Comparator.comparingInt(p -> p.burst));
+            Process p = queue.remove(0);
+            result.add(new GanttBlock(p.id, time, time + p.burst));
+            time += p.burst;
         }
-        return blocks;
+
+        return result;
     }
 
     //SRTF logic (preemptive)

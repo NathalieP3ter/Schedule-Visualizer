@@ -5,29 +5,33 @@ import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 
-
 public class GanttChartPanel extends JPanel {
 
-       public enum Style {
+    public enum Style {
         FCFS, SJF, RR, SRTF, MLFQ
     }
-    
+
     private Style style = Style.FCFS;
     private List<GanttBlock> blocks;
     private int animatedBlockCount = 0;
+    private int blockScale = 40;
+    private int animationDelay = 300;
 
-      // Connects style from SchedulerUI
+    // Set style externally (from SchedulerUI)
     public void setStyle(Style style) {
         this.style = style;
     }
 
+    // Optional: Adjust animation speed
+    public void setAnimationDelay(int ms) {
+        this.animationDelay = ms;
+    }
 
-     // Animate blocks on simulate
     public void animateBlocks(List<GanttBlock> blocks) {
         this.blocks = blocks;
-        animatedBlockCount = 0;
+        this.animatedBlockCount = 0;
 
-        Timer timer = new Timer(300, e -> {
+        Timer timer = new Timer(animationDelay, e -> {
             animatedBlockCount++;
             repaint();
             if (animatedBlockCount >= blocks.size()) {
@@ -37,8 +41,13 @@ public class GanttChartPanel extends JPanel {
         timer.start();
     }
 
+    public void setBlocksInstant(List<GanttBlock> blocks) {
+        this.blocks = blocks;
+        this.animatedBlockCount = blocks.size();
+        repaint();
+    }
 
-         @Override
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (blocks == null || blocks.isEmpty()) return;
@@ -49,11 +58,10 @@ public class GanttChartPanel extends JPanel {
         int x = 50;
         int y = 60;
         int height = 50;
-        int scale = 40;
 
         for (int i = 0; i < animatedBlockCount && i < blocks.size(); i++) {
             GanttBlock b = blocks.get(i);
-            int width = (b.end - b.start) * scale;
+            int width = (b.end - b.start) * blockScale;
 
             g2d.setColor(getColorForStyle());
             g2d.fill(new RoundRectangle2D.Double(x, y, width, height, 15, 15));

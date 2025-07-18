@@ -73,47 +73,50 @@ public class SchedulerUI extends JFrame {
             "Generated " + count + " random processes\nExtension selected: " + extension,
             "Random Generation", JOptionPane.INFORMATION_MESSAGE);
     }
-
-
-
-
-
-//wala pa ni naupdate nako 
-
+    
     private void simulate(){
-        int[] arrival = {0, 2, 4};
-        int[] burst = {5, 3, 1};
         String selectedAlgo = (String) algorithmSelector.getSelectedItem();
+        List<GanttBlock> rawBlocks = new ArrayList<>();
+        List<SchedulerLogic.Process> cloneList = new ArrayList<>();
 
-        List<SchedulerLogic.Process> processes = new ArrayList<>();
-        for (int i = 0; i < arrival.length; i++) {
-            processes.add(new SchedulerLogic.Process(i, arrival[i], burst[i]));
+        if (currentProcesses.isEmpty()) {
+            // default static list
+            int[] arrival = {0, 2, 4};
+            int[] burst = {5, 3, 1};
+            for (int i = 0; i < arrival.length; i++) {
+                cloneList.add(new SchedulerLogic.Process(i, arrival[i], burst[i]));
+            }
+        } else {
+            for (SchedulerLogic.Process p : currentProcesses) {
+                cloneList.add(new SchedulerLogic.Process(p.id, p.arrival, p.burst));
+            }
         }
 
-        List<GanttBlock> rawBlocks = new ArrayList<>();
         switch (selectedAlgo) {
             case "FCFS":
-                rawBlocks = SchedulerLogic.runFIFO(new ArrayList<>(processes));
+                rawBlocks = SchedulerLogic.runFIFO(cloneList);
+                chart.setStyle(GanttChartPanel.Style.FCFS);
                 break;
             case "SJF":
-                rawBlocks = SchedulerLogic.runSJF(new ArrayList<>(processes));
+                rawBlocks = SchedulerLogic.runSJF(cloneList);
+                chart.setStyle(GanttChartPanel.Style.SJF);
                 break;
             case "RR":
                 int quantum = 2;
-                 try {
+                try {
                     quantum = Integer.parseInt(quantumField.getText());
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(this, "Invalid quantum value. Using default: 2", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Invalid quantum. Using default: 2");
                 }
-                rawBlocks = SchedulerLogic.runRoundRobin(new ArrayList<>(processes), quantum);
+                rawBlocks = SchedulerLogic.runRoundRobin(cloneList, quantum);
+                chart.setStyle(GanttChartPanel.Style.RR);
                 break;
             case "SRTF":
-                rawBlocks = SchedulerLogic.runSRTF(new ArrayList<>(processes));
+                rawBlocks = SchedulerLogic.runSRTF(cloneList);
+                chart.setStyle(GanttChartPanel.Style.SRTF);
                 break;
         }
 
         chart.setBlocks(rawBlocks);
     }
-   
-
 }

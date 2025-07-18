@@ -16,7 +16,6 @@ public class SchedulerLogic {
         }
     }
 
-    // FIFO
     public static List<GanttBlock> runFIFO(List<Process> processes) {
         processes.sort(Comparator.comparingInt(p -> p.arrival));
         List<GanttBlock> result = new ArrayList<>();
@@ -28,14 +27,13 @@ public class SchedulerLogic {
             p.completion = time + p.burst;
             p.turnaround = p.completion - p.arrival;
             p.waiting = p.turnaround - p.burst;
-
             result.add(new GanttBlock(p.id, time, time + p.burst));
             time += p.burst;
         }
+
         return result;
     }
 
-    // SJF (Non-Preemptive)
     public static List<GanttBlock> runSJF(List<Process> processes) {
         List<GanttBlock> result = new ArrayList<>();
         List<Process> queue = new ArrayList<>();
@@ -57,7 +55,6 @@ public class SchedulerLogic {
 
             queue.sort(Comparator.comparingInt(p -> p.burst));
             Process p = queue.remove(0);
-
             if (p.response == -1) p.response = time - p.arrival;
             p.completion = time + p.burst;
             p.turnaround = p.completion - p.arrival;
@@ -66,10 +63,10 @@ public class SchedulerLogic {
             result.add(new GanttBlock(p.id, time, time + p.burst));
             time += p.burst;
         }
+
         return result;
     }
 
-    // SRTF (Preemptive)
     public static List<GanttBlock> runSRTF(List<Process> processes) {
         List<GanttBlock> result = new ArrayList<>();
         List<Process> ready = new ArrayList<>();
@@ -106,7 +103,6 @@ public class SchedulerLogic {
             }
 
             current.remaining--;
-
             if (current.remaining == 0) {
                 current.completion = time + 1;
                 current.turnaround = current.completion - current.arrival;
@@ -116,10 +112,10 @@ public class SchedulerLogic {
 
             time++;
         }
+
         return result;
     }
 
-    // Round Robin
     public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
         List<GanttBlock> result = new ArrayList<>();
         Queue<Process> queue = new LinkedList<>();
@@ -164,7 +160,6 @@ public class SchedulerLogic {
         return result;
     }
 
-    // Multi-Level Feedback Queue
     public static List<GanttBlock> runMLFQ(List<Process> processes, int[] quantums) {
         int numQueues = quantums.length;
         List<GanttBlock> blocks = new ArrayList<>();
@@ -234,7 +229,6 @@ public class SchedulerLogic {
         return blocks;
     }
 
-    // Utility: Metric Averages
     public static Map<String, Double> calculateAverages(List<Process> processes) {
         double totalWT = 0, totalTAT = 0, totalRT = 0;
 

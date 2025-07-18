@@ -20,12 +20,12 @@ public class SchedulerUI extends JFrame {
     public SchedulerUI() {
         setTitle("CPU Scheduling Visualizer");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1350, 750);
+        setSize(1100, 650); // ✅ Resized window for better display
         setLocationRelativeTo(null);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 buildControlPanel(), buildOutputPanel());
-        splitPane.setDividerLocation(340);
+        splitPane.setDividerLocation(300); // Adjusted for new window size
         add(splitPane);
 
         setVisible(true);
@@ -34,7 +34,7 @@ public class SchedulerUI extends JFrame {
     private JPanel buildControlPanel() {
         JPanel panel = new JPanel();
         panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setPreferredSize(new Dimension(340, 700));
+        panel.setPreferredSize(new Dimension(300, 650));
         panel.setBorder(BorderFactory.createTitledBorder("Controls"));
 
         algorithmSelector = new JComboBox<>(new String[]{"FCFS", "SJF", "SRTF", "RR", "MLFQ"});
@@ -84,6 +84,13 @@ public class SchedulerUI extends JFrame {
         JButton simulateBtn = new JButton("▶️ Simulate");
         simulateBtn.addActionListener(e -> simulate());
 
+        JButton resetBtn = new JButton("🔄 Reset"); // ✅ New Reset button
+        resetBtn.addActionListener(e -> {
+            ((DefaultTableModel) inputTable.getModel()).setRowCount(0);
+            ((DefaultTableModel) outputTable.getModel()).setRowCount(0);
+            chartPanel.setBlocksInstant(new ArrayList<>());
+        });
+
         panel.add(new JLabel("Algorithm:"));         panel.add(algorithmSelector);
         panel.add(new JLabel("Time Quantum:"));       panel.add(quantumField);
         panel.add(new JLabel("Process Count:"));      panel.add(processCountField);
@@ -94,6 +101,7 @@ public class SchedulerUI extends JFrame {
         panel.add(addRow);
         panel.add(generateRandomBtn);
         panel.add(simulateBtn);
+        panel.add(resetBtn); // ✅ Add it here
 
         return panel;
     }

@@ -206,7 +206,7 @@ public class SchedulerLogic {
         return blocks;
     }
 
-    // Utility: Calculate averages
+    // Utility: Calculates averages
     public static Map<String, Double> calculateAverages(List<Process> processes) {
         double totalWT = 0, totalTAT = 0;
         for (Process p : processes) {

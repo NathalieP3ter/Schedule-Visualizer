@@ -18,30 +18,26 @@ public class SchedulerUI extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Control Panel Layout
         JPanel controlPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // Algorithm selector
-        String[] algorithms = {"FCFS", "SJF", "RR", "SRTF"};
+        // Include MLFQ as an algorithm option
+        String[] algorithms = {"FCFS", "SJF", "RR", "SRTF", "MLFQ"};
         algorithmSelector = new JComboBox<>(algorithms);
 
-        // Extension formats (symbolic)
-        String[] extensions = {".txt", ".csv", ".log", ".xml"};
+        // Expanded list of extensions for randomness
+        String[] extensions = {".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"};
         extensionSelector = new JComboBox<>(extensions);
 
-        // Quantum + process count fields
-        quantumField = new JTextField("2", 5);
+        quantumField = new JTextField("2", 5); // Used for RR
         processCountField = new JTextField("3", 5);
 
-        // Buttons
         simulateBtn = new JButton("Simulate");
         simulateBtn.addActionListener(e -> simulate());
 
         generateRandomBtn = new JButton("Generate Random");
         generateRandomBtn.addActionListener(e -> generateRandomProcesses());
 
-        // Add controls to panel
         controlPanel.add(new JLabel("Algorithm:"));
         controlPanel.add(algorithmSelector);
         controlPanel.add(new JLabel("Quantum (RR):"));
@@ -53,14 +49,12 @@ public class SchedulerUI extends JFrame {
         controlPanel.add(generateRandomBtn);
         controlPanel.add(simulateBtn);
 
-        // Add to frame
         add(controlPanel, BorderLayout.NORTH);
         add(chart, BorderLayout.CENTER);
 
-        // Fix window layout and size
         setPreferredSize(new Dimension(1200, 700));
         pack();
-        setLocationRelativeTo(null); // Center on screen
+        setLocationRelativeTo(null);
         setVisible(true);
     }
 
@@ -77,14 +71,18 @@ public class SchedulerUI extends JFrame {
         currentProcesses.clear();
 
         for (int i = 0; i < count; i++) {
-            int arrival = rand.nextInt(5);     // 0–4
-            int burst = 1 + rand.nextInt(9);   // 1–9
+            int arrival = rand.nextInt(5);
+            int burst = 1 + rand.nextInt(9);
             currentProcesses.add(new SchedulerLogic.Process(i, arrival, burst));
         }
 
-        String extension = (String) extensionSelector.getSelectedItem();
+        // Select a random extension and reflect it in the dropdown
+        String[] extensions = {".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"};
+        String randomExtension = extensions[rand.nextInt(extensions.length)];
+        extensionSelector.setSelectedItem(randomExtension);
+
         JOptionPane.showMessageDialog(this,
-            "Generated " + count + " random processes\nExtension selected: " + extension,
+            "Generated " + count + " random processes\nRandom file extension: " + randomExtension,
             "Random Generation", JOptionPane.INFORMATION_MESSAGE);
     }
 
@@ -128,9 +126,14 @@ public class SchedulerUI extends JFrame {
                 rawBlocks = SchedulerLogic.runSRTF(cloneList);
                 chart.setStyle(GanttChartPanel.Style.SRTF);
                 break;
+            case "MLFQ":
+                int[] quantums = {2, 4, 6, 8}; // Customize as needed
+                rawBlocks = SchedulerLogic.runMLFQ(cloneList, quantums);
+                chart.setStyle(GanttChartPanel.Style.MLFQ);
+                break;
         }
 
-        chart.animateBlocks(rawBlocks); // ✨ Animated rendering
+        chart.animateBlocks(rawBlocks);
     }
 
     public static void main(String[] args) {

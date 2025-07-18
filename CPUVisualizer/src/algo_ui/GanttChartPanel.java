@@ -5,12 +5,12 @@ import java.awt.*;
 import java.util.List;
 
 public class GanttChartPanel extends JPanel {
-    private List<GanttBlock> blocks;
 
     public enum Style{
         FCFS, SJF, RR, SRTF
     }
     private Style style = Style.FCFS;
+    private List<GanttBlock> blocks;
 
    public void setBlocks(List<GanttBlock> blocks) {
         this.blocks = blocks;
@@ -23,42 +23,43 @@ public class GanttChartPanel extends JPanel {
 
 
 
-    @Override
+     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        if (blocks == null) return;
+        if (blocks == null || blocks.isEmpty()) return;
 
-        int x = 50;
+        int x = 30;
         int y = 50;
-        int height = 50;
-        int scale = 30;
+        int height = 40;
+        int scale = 40;
 
-        for (GanttBlock block : blocks) {
-            int width = (block.end - block.start) * scale;
+
+        for (GanttBlock b : blocks) {
+            int width = (b.end - b.start) * scale;
 
             g.setColor(getColorForStyle());
             g.fillRect(x, y, width, height);
 
             g.setColor(Color.BLACK);
             g.drawRect(x, y, width, height);
-            g.drawString("P" + block.pid, x + width / 2 - 10, y + height / 2);
-            g.drawString(String.valueOf(block.start), x, y + height + 15);
+            g.drawString("P" + b.pid, x + width / 2 - 10, y + height / 2);
+            g.drawString("" + b.start, x - 5, y + height + 20);
 
             x += width;
         }
 
-        if (!blocks.isEmpty()) {
-            g.drawString(String.valueOf(blocks.get(blocks.size() - 1).end), x, y + height + 15);
-        }
+
+     // Final end time label
+        g.drawString("" + blocks.get(blocks.size() - 1).end, x - 5, y + height + 20);
     }
 
-    private Color getColorForStyle() {
+     private Color getColorForStyle() {
         switch (style) {
-            case SJF: return new Color(204, 229, 255);      // light blue
-            case RR: return new Color(255, 255, 204);        // soft yellow
-            case SRTF: return new Color(255, 204, 229);      // pink
+            case SJF: return new Color(204, 229, 255);      // Light blue
+            case RR: return new Color(255, 255, 204);        // Soft yellow
+            case SRTF: return new Color(255, 204, 229);      // Pink
             case FCFS:
-            default: return new Color(204, 255, 204);        // light green
+            default: return new Color(204, 255, 204);        // Light green
         }
     }
 }

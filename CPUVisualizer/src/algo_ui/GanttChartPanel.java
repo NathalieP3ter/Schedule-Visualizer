@@ -2,30 +2,42 @@ package CPUVisualizer.src.algo_ui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.util.List;
 
 public class GanttChartPanel extends JPanel {
-    private List<SchedulerLogic.GanttBlock> ganttData;
-    private int animatedIndex = 0;
-    private Timer animationTimer;
+    public enum Style { FCFS, SJF, SRTF, RR, MLFQ }
 
-    public void setGanttData(List<SchedulerLogic.GanttBlock> data) {
-        this.ganttData = data;
-        this.animatedIndex = 0;
+    private List<GanttBlock> blocks = new ArrayList<>();
+    private int animationDelay = 200;
+    private Style currentStyle = Style.FCFS;
+
+    private static final int BLOCK_WIDTH = 40;
+    private static final int BLOCK_HEIGHT = 40;
+    private static final int MARGIN = 20;
+
+    private Map<Integer, Color> processColors = new HashMap<>();
+
+    public GanttChartPanel() {
+        setPreferredSize(new Dimension(800, 100));
+        setBackground(Color.WHITE);
     }
 
-    public void animateBlocks(int delay) {
-        if (ganttData == null || ganttData.isEmpty()) return;
+    public void setBlocksInstant(List<GanttBlock> newBlocks) {
+        this.blocks = new ArrayList<>(newBlocks);
+        updatePreferredSize();
+        repaint();
+    }
 
-        animatedIndex = 0;
-        animationTimer = new Timer(delay, e -> {
-            animatedIndex++;
-            repaint();
-            if (animatedIndex >= ganttData.size()) {
-                animationTimer.stop();
+    @Override
+    public Dimension getPreferredSize() {
+        int totalWidth = 50;
+        if (blocks != null) {
+            for (GanttBlock b : blocks) {
+                totalWidth += (b.end - b.start) * blockScale;
             }
-        });
-        animationTimer.start();
+        }
+        return new Dimension(Math.max(totalWidth, 800), 150);
     }
 
     @Override
@@ -34,27 +46,37 @@ public class GanttChartPanel extends JPanel {
         if (ganttData == null) return;
 
         Graphics2D g2 = (Graphics2D) g;
-        g2.setFont(new Font("SansSerif", Font.BOLD, 12));
-        int x = 20;
-        int y = 30;
-        int height = 40;
-        int scale = 20;
+        g2.setFont(new Font("Arial", Font.BOLD, 12));
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        for (int i = 0; i < animatedIndex && i < ganttData.size(); i++) {
-            SchedulerLogic.GanttBlock block = ganttData.get(i);
-            int width = (block.end - block.start) * scale;
-            g2.setColor(Color.CYAN);
-            g2.fillRect(x, y, width, height);
-            g2.setColor(Color.BLACK);
-            g2.drawRect(x, y, width, height);
-            g2.drawString("P" + block.pid, x + width / 2 - 10, y + height / 2);
-            g2.drawString("" + block.start, x - 5, y + height + 15);
+        for (int i = 0; i < animatedBlockCount && i < blocks.size(); i++) {
+            GanttBlock b = blocks.get(i);
+            int width = (b.end - b.start) * blockScale;
+
+            g2d.setColor(getColorForStyle());
+            g2d.fill(new RoundRectangle2D.Double(x, y, width, height, 15, 15));
+
+            g2d.setColor(Color.BLACK);
+            g2d.draw(new RoundRectangle2D.Double(x, y, width, height, 15, 15));
+            g2d.drawString("P" + b.pid, x + width / 2 - 12, y + height / 2);
+            g2d.drawString("" + b.start, x - 5, y + height + 25);
+
             x += width;
         }
 
-        if (animatedIndex == ganttData.size() && !ganttData.isEmpty()) {
-            SchedulerLogic.GanttBlock last = ganttData.get(ganttData.size() - 1);
-            g2.drawString("" + last.end, x - 5, y + height + 15);
+        if (animatedBlockCount > 0 && animatedBlockCount <= blocks.size()) {
+            int finalEnd = blocks.get(animatedBlockCount - 1).end;
+            g2d.drawString("" + finalEnd, x - 5, y + height + 25);
         }
+    }
+
+    private Color getColorForStyle() {
+        return switch (style) {
+            case SJF   -> new Color(204, 229, 255);
+            case RR    -> new Color(255, 255, 204);
+            case SRTF  -> new Color(255, 204, 229);
+            case MLFQ  -> new Color(204, 204, 255);
+            case FCFS  -> new Color(204, 255, 204);
+        };
     }
 }

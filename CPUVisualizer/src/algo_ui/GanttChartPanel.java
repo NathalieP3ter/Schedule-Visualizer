@@ -8,8 +8,8 @@ import java.util.List;
 
 public class GanttChartPanel extends JPanel {
 
-    public enum Style{
-        FCFS, SJF, RR, SRTF
+       public enum Style {
+        FCFS, SJF, RR, SRTF, MLFQ
     }
     
     private Style style = Style.FCFS;
@@ -38,7 +38,7 @@ public class GanttChartPanel extends JPanel {
     }
 
 
-     @Override
+         @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (blocks == null || blocks.isEmpty()) return;
@@ -51,7 +51,6 @@ public class GanttChartPanel extends JPanel {
         int height = 50;
         int scale = 40;
 
-
         for (int i = 0; i < animatedBlockCount && i < blocks.size(); i++) {
             GanttBlock b = blocks.get(i);
             int width = (b.end - b.start) * scale;
@@ -61,7 +60,6 @@ public class GanttChartPanel extends JPanel {
 
             g2d.setColor(Color.BLACK);
             g2d.draw(new RoundRectangle2D.Double(x, y, width, height, 15, 15));
-
             g2d.drawString("P" + b.pid, x + width / 2 - 12, y + height / 2);
             g2d.drawString("" + b.start, x - 5, y + height + 25);
 
@@ -79,6 +77,7 @@ public class GanttChartPanel extends JPanel {
             case SJF:  return new Color(204, 229, 255); // Light blue
             case RR:   return new Color(255, 255, 204); // Soft yellow
             case SRTF: return new Color(255, 204, 229); // Pink
+            case MLFQ: return new Color(204, 204, 255); // Violet-blue
             case FCFS:
             default:   return new Color(204, 255, 204); // Light green
         }

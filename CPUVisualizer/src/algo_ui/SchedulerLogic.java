@@ -3,116 +3,251 @@ package CPUVisualizer.src.algo_ui;
 import java.util.*;
 
 public class SchedulerLogic {
-    public static class Process {
-        public int pid, arrival, burst, remaining, completion, start;
-        public int waiting, turnaround;
 
-        public Process(int pid, int arrival, int burst) {
-            this.pid = pid;
-            this.arrival = arrival;
-            this.burst = burst;
-            this.remaining = burst;
-            this.start = -1;
-        }
-    }
+   public static class Process {
+       public int id, arrival, burst, remaining;
+       public int start = -1, completion = 0, waiting = 0, turnaround = 0, response = -1;
 
-    public static class GanttBlock {
-        int pid, start, end;
-        public GanttBlock(int pid, int start, int end) {
-            this.pid = pid;
-            this.start = start;
-            this.end = end;
-        }
-    }
+       public Process(int id, int arrival, int burst) {
+           this.id = id;
+           this.arrival = arrival;
+           this.burst = burst;
+           this.remaining = burst;
+       }
+   }
 
-    private List<Process> processes = new ArrayList<>();
-    private List<GanttBlock> ganttBlocks = new ArrayList<>();
-    private Queue<Process> readyQueue = new LinkedList<>();
-    private String cpuStatus = "Idle";
-    private double avgWaiting = 0, avgTurnaround = 0;
-    private int totalExecTime = 0;
+   public static List<GanttBlock> runFIFO(List<Process> processes) {
+       processes.sort(Comparator.comparingInt(p -> p.arrival));
+       List<GanttBlock> result = new ArrayList<>();
+       int time = 0;
 
-    public void generateRandomProcesses(int count, String ext) {
-        Random rand = new Random();
-        processes.clear();
-        for (int i = 0; i < count; i++) {
-            int arrival = rand.nextInt(10);
-            int burst = 1 + rand.nextInt(10);
-            processes.add(new Process(i + 1, arrival, burst));
-        }
-        processes.sort(Comparator.comparingInt(p -> p.arrival));
-    }
+       for (Process p : processes) {
+           time = Math.max(time, p.arrival);
+           p.start = time;
+           p.response = time - p.arrival;
+           time += p.burst;
+           p.completion = time;
+           p.turnaround = p.completion - p.arrival;
+           p.waiting = p.turnaround - p.burst;
+           result.add(new GanttBlock(p.id, p.start, p.completion));
+       }
 
-    public void run(String algorithm, int quantum) {
-        ganttBlocks.clear();
-        readyQueue.clear();
-        cpuStatus = "Idle";
-        avgWaiting = 0;
-        avgTurnaround = 0;
-        totalExecTime = 0;
+       return result;
+   }
 
-        if (algorithm.equals("FIFO")) runFIFO();
-        // else if (algorithm.equals("SJF")) runSJF(); // Extend as needed
-        // else if (algorithm.equals("SRTF")) runSRTF();
-        // else if (algorithm.equals("Round Robin")) runRR(quantum);
-        // else if (algorithm.equals("MLFQ")) runMLFQ(quantum);
+   public static List<GanttBlock> runSJF(List<Process> processes) {
+       List<GanttBlock> result = new ArrayList<>();
+       List<Process> queue = new ArrayList<>();
+       int time = 0;
 
-        int totalWaiting = 0, totalTurnaround = 0;
-        for (Process p : processes) {
-            totalWaiting += p.waiting;
-            totalTurnaround += p.turnaround;
-        }
-        avgWaiting = totalWaiting / (double) processes.size();
-        avgTurnaround = totalTurnaround / (double) processes.size();
-    }
+       processes.sort(Comparator.comparingInt(p -> p.arrival));
 
-    private void runFIFO() {
-        processes.sort(Comparator.comparingInt(p -> p.arrival));
-        int time = 0;
-        for (Process p : processes) {
-            if (time < p.arrival) time = p.arrival;
-            p.start = time;
-            time += p.burst;
-            p.completion = time;
-            p.turnaround = p.completion - p.arrival;
-            p.waiting = p.start - p.arrival;
-            ganttBlocks.add(new GanttBlock(p.pid, p.start, p.completion));
-            readyQueue.offer(p);
-        }
-        cpuStatus = "Running P" + (readyQueue.peek() != null ? readyQueue.peek().pid : "-");
-        totalExecTime = time;
-    }
+       while (!processes.isEmpty() || !queue.isEmpty()) {
+           for (Iterator<Process> it = processes.iterator(); it.hasNext();) {
+               Process p = it.next();
+               if (p.arrival <= time) {
+                   queue.add(p);
+                   it.remove();
+               }
+           }
 
-    public String getCurrentCPUStatus() {
-        return cpuStatus;
-    }
+           if (queue.isEmpty()) {
+               time++;
+               continue;
+           }
 
-    public String getReadyQueueString() {
-        StringBuilder sb = new StringBuilder();
-        for (Process p : readyQueue) {
-            sb.append("P").append(p.pid).append(" ");
-        }
-        return sb.toString();
-    }
+           queue.sort(Comparator.comparingInt(p -> p.burst));
+           Process p = queue.remove(0);
 
-    public double getAverageWaitingTime() {
-        return avgWaiting;
-    }
+           time = Math.max(time, p.arrival);
+           p.start = time;
+           p.response = time - p.arrival;
+           time += p.burst;
+           p.completion = time;
+           p.turnaround = p.completion - p.arrival;
+           p.waiting = p.turnaround - p.burst;
+           result.add(new GanttBlock(p.id, p.start, p.completion));
+       }
 
-    public double getAverageTurnaroundTime() {
-        return avgTurnaround;
-    }
+       return result;
+   }
 
-    public int getTotalExecutionTime() {
-        return totalExecTime;
-    }
+   public static List<GanttBlock> runSRTF(List<Process> processes) {
+       List<GanttBlock> result = new ArrayList<>();
+       List<Process> ready = new ArrayList<>();
+       int time = 0;
+       Process current = null;
 
-    public List<GanttBlock> getGanttBlocks() {
-        return ganttBlocks;
-    }
+       processes.sort(Comparator.comparingInt(p -> p.arrival));
 
-    public List<Process> getProcesses() {
-        return processes;
-    }
+       while (!processes.isEmpty() || !ready.isEmpty() || current != null) {
+           while (!processes.isEmpty() && processes.get(0).arrival == time) {
+               ready.add(processes.remove(0));
+           }
+
+           if (current != null) ready.add(current);
+
+           if (ready.isEmpty()) {
+               current = null;
+               time++;
+               continue;
+           }
+
+           ready.sort(Comparator.comparingInt(p -> p.remaining));
+           current = ready.remove(0);
+
+           if (current.start == -1) {
+               current.start = time;
+               current.response = time - current.arrival;
+           }
+
+           if (!result.isEmpty() && result.get(result.size() - 1).pid == current.id) {
+               result.get(result.size() - 1).end++;
+           } else {
+               result.add(new GanttBlock(current.id, time, time + 1));
+           }
+
+           current.remaining--;
+           if (current.remaining == 0) {
+               current.completion = time + 1;
+               current.turnaround = current.completion - current.arrival;
+               current.waiting = current.turnaround - current.burst;
+               current = null;
+           }
+
+           time++;
+       }
+
+       return result;
+   }
+
+   public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
+       List<GanttBlock> result = new ArrayList<>();
+       Queue<Process> queue = new LinkedList<>();
+       int time = 0;
+       processes.sort(Comparator.comparingInt(p -> p.arrival));
+
+       while (!processes.isEmpty() || !queue.isEmpty()) {
+           while (!processes.isEmpty() && processes.get(0).arrival <= time) {
+               queue.offer(processes.remove(0));
+           }
+
+           if (queue.isEmpty()) {
+               time++;
+               continue;
+           }
+
+           Process p = queue.poll();
+
+           if (p.start == -1) {
+               p.start = time;
+               p.response = time - p.arrival;
+           }
+
+           int execTime = Math.min(quantum, p.remaining);
+           result.add(new GanttBlock(p.id, time, time + execTime));
+           time += execTime;
+           p.remaining -= execTime;
+
+           while (!processes.isEmpty() && processes.get(0).arrival <= time) {
+               queue.offer(processes.remove(0));
+           }
+
+           if (p.remaining > 0) {
+               queue.offer(p);
+           } else {
+               p.completion = time;
+               p.turnaround = p.completion - p.arrival;
+               p.waiting = p.turnaround - p.burst;
+           }
+       }
+
+       return result;
+   }
+
+   public static List<GanttBlock> runMLFQ(List<Process> processes, int[] quantums) {
+       int numQueues = quantums.length;
+       List<GanttBlock> blocks = new ArrayList<>();
+       List<Queue<Process>> queues = new ArrayList<>();
+       for (int i = 0; i < numQueues; i++) queues.add(new LinkedList<>());
+
+       int time = 0, completed = 0, n = processes.size();
+       List<Process> arrived = new ArrayList<>(processes);
+
+       while (completed < n) {
+           for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+               Process p = it.next();
+               if (p.arrival <= time) {
+                   queues.get(0).add(p);
+                   it.remove();
+               }
+           }
+
+           Process p = null;
+           int qIdx = -1;
+
+           for (int i = 0; i < numQueues; i++) {
+               if (!queues.get(i).isEmpty()) {
+                   p = queues.get(i).poll();
+                   qIdx = i;
+                   break;
+               }
+           }
+
+           if (p == null) {
+               time++;
+               continue;
+           }
+
+           if (p.start == -1) {
+               p.start = time;
+               p.response = time - p.arrival;
+           }
+
+           int exec = Math.min(quantums[qIdx], p.remaining);
+           blocks.add(new GanttBlock(p.id, time, time + exec));
+           time += exec;
+           p.remaining -= exec;
+
+           for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
+               Process q = it.next();
+               if (q.arrival <= time) {
+                   queues.get(0).add(q);
+                   it.remove();
+               }
+           }
+
+           if (p.remaining > 0) {
+               if (qIdx < numQueues - 1) {
+                   queues.get(qIdx + 1).add(p);
+               } else {
+                   queues.get(qIdx).add(p);
+               }
+           } else {
+               p.completion = time;
+               p.turnaround = p.completion - p.arrival;
+               p.waiting = p.turnaround - p.burst;
+               completed++;
+           }
+       }
+
+       return blocks;
+   }
+
+   public static Map<String, Double> calculateAverages(List<Process> processes) {
+       double totalWT = 0, totalTAT = 0, totalRT = 0;
+
+       for (Process p : processes) {
+           totalWT += p.waiting;
+           totalTAT += p.turnaround;
+           totalRT += p.response;
+       }
+
+       Map<String, Double> avg = new HashMap<>();
+       avg.put("avgWaiting", totalWT / processes.size());
+       avg.put("avgTurnaround", totalTAT / processes.size());
+       avg.put("avgResponse", totalRT / processes.size());
+
+       return avg;
+   }
 }
-//te be continued

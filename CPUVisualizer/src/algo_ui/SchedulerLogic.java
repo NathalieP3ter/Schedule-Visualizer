@@ -5,23 +5,23 @@ import java.util.*;
 public class SchedulerLogic {
 
     public static class Process{
-        public int pid,arrival,burst,remaining,completion,start;
-        public int waiting,turnaround,response;
+        public static id, arrival, burst, remaining;
 
-        public Process(int pid, int arrival,int burst) {
-            this.pid =pid;
-            this.arrival = arrival;
-            this.burst = burst;
-            this.remaining = burst;
-            this.start = -1;
+        public Process(int id, int arrival, int burst) {
+           this.id = id;
+           this.arrival = arrival;
+           this.burst = burst;
+           this.remaining = burst; // for preemptive algorithms
         }
     }
 
     //FIFO logic
 
     public static List<GanttBlock> runFIFO (List<Process> processes){
+        processes.sort(Comparator.comparingInt(p -> p.arrival));
         List<GanttBlock> blocks = new ArrayList<>();
         int time = 0;
+        
         for (Process p : processes){
             if (time < p.arrival) time = p.arrival;
             p.start = time;

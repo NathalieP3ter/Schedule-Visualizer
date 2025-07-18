@@ -64,94 +64,84 @@ public class SchedulerLogic {
     //SRTF logic (preemptive)
 
     public static List<GanttBlock> runSRTF(List<Process> processes) {
-        List<GanttBlock> blocks = new ArrayList<>();
+        List<GanttBlock> result = new ArrayList<>();
         List<Process> ready = new ArrayList<>();
-        int time = 0, completed = 0, n = processes.size();
+        int time = 0;
         Process current = null;
-        int lastTime = 0;
-        while(completed < n){
-            for(Process p : processes){
-                if (p.arrival == time) ready.add(p);
-        }
-        Process next = ready.stream()
-        .filter(p -> p.remaining > 0)
-        .min(Comparator.comparingInt(p -> p.remaining))
-        .orElse(null);
+        int start = 0;
 
-        if(next != null){
-            if (current != next){
-                if (current != null && current.remaining > 0) {
-                    blocks.add(new GanttBlock(current.pid, lastTime, time));
-                }
-                current = next;
-                lastTime = time;
-                if (current.start == -1) current.start = time;
+        processes.sort(Comparator.comparingInt(p -> p.arrival));
+
+        while (!processes.isEmpty() || !ready.isEmpty() || current != null) {
+            while (!processes.isEmpty() && processes.get(0).arrival == time) {
+                ready.add(processes.remove(0));
             }
 
-            next.remaining--;
-            if (next.remaining == 0){
-                next.completion = time + 1;
-                next.turnaround =next.completion - next.arrival;
-                next.waiting = next.turnaround - next.burst;
-                completed++;
+            if (current != null) {
+                ready.add(current);
             }
-            time ++;
-        } else {
+
+            if (ready.isEmpty()) {
+                current = null;
+                time++;
+                continue;
+            }
+
+            ready.sort(Comparator.comparingInt(p -> p.remaining));
+            current = ready.remove(0);
+
+            if (result.size() > 0 && result.get(result.size() - 1).pid == current.id) {
+                result.get(result.size() - 1).end++;
+            } else {
+                result.add(new GanttBlock(current.id, time, time + 1));
+            }
+
+            current.remaining--;
+            if (current.remaining == 0) {
+                current = null;
+            } else {
+                start = time + 1;
+            }
+
             time++;
         }
-    }
-        if (current != null && current.remaining > 0) {
-            blocks.add(new GanttBlock(current.pid, lastTime, time));
-        }
-        return blocks;
+
+        return result;
     }
     //Round Robin logic
     public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
-        List<GanttBlock> blocks = new ArrayList<>();
+        List<GanttBlock> result = new ArrayList<>();
         Queue<Process> queue = new LinkedList<>();
-        List<Process> arrived = new ArrayList<>(processes);
-        int time = 0, completed = 0, n = processes.size();
-        
-        while (completed < n) {
-            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
-                Process p = it.next();
-                if (p.arrival <= time) {
-                    queue.add(p);
-                    it.remove();
-                }
+        int time = 0;
+        processes.sort(Comparator.comparingInt(p -> p.arrival));
+
+        while (!processes.isEmpty() || !queue.isEmpty()) {
+            while (!processes.isEmpty() && processes.get(0).arrival <= time) {
+                queue.offer(processes.remove(0));
             }
+
             if (queue.isEmpty()) {
                 time++;
                 continue;
             }
+
             Process p = queue.poll();
-            int exec = Math.min(quantum, p.remaining);
-            if (p.start == -1) p.start = time;
+            int execTime = Math.min(quantum, p.remaining);
+            result.add(new GanttBlock(p.id, time, time + execTime));
+            time += execTime;
+            p.remaining -= execTime;
 
-            blocks.add(new GanttBlock(p.pid, time, time + exec));
-
-            time += exec;
-            p.remaining -= exec;
-            
-            for (Iterator<Process> it = arrived.iterator(); it.hasNext();) {
-                Process q = it.next();
-                if (q.arrival <= time) {
-                    queue.add(q);
-                    it.remove();
-                }
+            while (!processes.isEmpty() && processes.get(0).arrival <= time) {
+                queue.offer(processes.remove(0));
             }
+
             if (p.remaining > 0) {
-                queue.add(p);
-            } else {
-                p.completion = time;
-                p.turnaround = p.completion - p.arrival;
-                p.waiting = p.turnaround - p.burst;
-                completed++;
+                queue.offer(p);
             }
         }
-        return blocks;
-    }
 
+        return result;
+    }
     //Multi-level Feedback Queue logic
     public static List<GanttBlock> runMLFQ(List<Process> processes, int[] quantums) {
         int numQueues = quantums.length;

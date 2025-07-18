@@ -20,12 +20,12 @@ public class SchedulerUI extends JFrame {
     public SchedulerUI() {
         setTitle("CPU Scheduling Visualizer");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(1100, 650); // ✅ Resized window for better display
+        setSize(1100, 650);
         setLocationRelativeTo(null);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 buildControlPanel(), buildOutputPanel());
-        splitPane.setDividerLocation(300); // Adjusted for new window size
+        splitPane.setDividerLocation(300);
         add(splitPane);
 
         setVisible(true);
@@ -38,14 +38,17 @@ public class SchedulerUI extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Controls"));
 
         algorithmSelector = new JComboBox<>(new String[]{"FCFS", "SJF", "SRTF", "RR", "MLFQ"});
+        algorithmSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
+
         extensionSelector = new JComboBox<>(new String[]{
                 ".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"
         });
+        extensionSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
 
         quantumField = new JTextField("2");
-        processCountField = new JTextField("3");
-
         quantumField.setMaximumSize(new Dimension(100, 25));
+
+        processCountField = new JTextField("3");
         processCountField.setMaximumSize(new Dimension(100, 25));
 
         speedSlider = new JSlider(10, 1000, 300);
@@ -68,23 +71,29 @@ public class SchedulerUI extends JFrame {
             DefaultTableModel model = (DefaultTableModel) inputTable.getModel();
             model.setRowCount(0);
             Random rand = new Random();
+
+            String[] extensions = {".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"};
+            StringBuilder usedExts = new StringBuilder();
+
             for (int i = 0; i < count; i++) {
                 int arrival = rand.nextInt(5);
                 int burst = 1 + rand.nextInt(9);
+                String ext = extensions[rand.nextInt(extensions.length)];
+                usedExts.append(ext).append(i < count - 1 ? ", " : "");
+
                 currentProcesses.add(new SchedulerLogic.Process(i, arrival, burst));
                 model.addRow(new Object[]{"P" + i, arrival, burst});
             }
 
-            String selected = extensionSelector.getSelectedItem().toString();
             JOptionPane.showMessageDialog(this,
-                    "Generated " + count + " processes\nExtension selected: " + selected,
+                    "Generated " + count + " processes\nExtensions used: " + usedExts,
                     "Random Generator", JOptionPane.INFORMATION_MESSAGE);
         });
 
         JButton simulateBtn = new JButton("▶️ Simulate");
         simulateBtn.addActionListener(e -> simulate());
 
-        JButton resetBtn = new JButton("🔄 Reset"); // ✅ New Reset button
+        JButton resetBtn = new JButton("🔄 Reset");
         resetBtn.addActionListener(e -> {
             ((DefaultTableModel) inputTable.getModel()).setRowCount(0);
             ((DefaultTableModel) outputTable.getModel()).setRowCount(0);
@@ -101,7 +110,7 @@ public class SchedulerUI extends JFrame {
         panel.add(addRow);
         panel.add(generateRandomBtn);
         panel.add(simulateBtn);
-        panel.add(resetBtn); // ✅ Add it here
+        panel.add(resetBtn);
 
         return panel;
     }
@@ -120,7 +129,9 @@ public class SchedulerUI extends JFrame {
         JScrollPane outputScroll = new JScrollPane(outputTable);
         outputScroll.setBorder(BorderFactory.createTitledBorder("Metrics"));
 
-        chartScroll = new JScrollPane(chartPanel);
+        chartScroll = new JScrollPane(chartPanel,
+                JScrollPane.VERTICAL_SCROLLBAR_NEVER,
+                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         chartScroll.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
 
         JPanel tables = new JPanel(new GridLayout(1, 2));

@@ -38,16 +38,15 @@ public class SchedulerLogic {
     public static List<GanttBlock> runSJF(List<Process> processes) {
         List<GanttBlock> result = new ArrayList<>();
         List<Process> queue = new ArrayList<>();
+        Set<Process> processed = new HashSet<>();
         int time = 0;
 
         processes.sort(Comparator.comparingInt(p -> p.arrival));
 
-        while (!processes.isEmpty() || !queue.isEmpty()) {
-            for (Iterator<Process> it = processes.iterator(); it.hasNext();) {
-                Process p = it.next();
-                if (p.arrival <= time) {
+        while (processed.size() < processes.size()) {
+            for (Process p : processes) {
+                if (p.arrival <= time && !queue.contains(p) && !processed.contains(p)) {
                     queue.add(p);
-                    it.remove();
                 }
             }
 
@@ -62,11 +61,13 @@ public class SchedulerLogic {
             time = Math.max(time, p.arrival);
             p.start = time;
             p.response = time - p.arrival;
-            time += p.burst;
-            p.completion = time;
+            p.completion = time + p.burst;
             p.turnaround = p.completion - p.arrival;
             p.waiting = p.turnaround - p.burst;
             result.add(new GanttBlock(p.id, p.start, p.completion));
+
+            processed.add(p);
+            time = p.completion;
         }
 
         return result;
@@ -80,16 +81,21 @@ public class SchedulerLogic {
 
         processes.sort(Comparator.comparingInt(p -> p.arrival));
 
-        while (!processes.isEmpty() || !ready.isEmpty() || current != null) {
-            while (!processes.isEmpty() && processes.get(0).arrival == time) {
-                ready.add(processes.remove(0));
+        while (true) {
+            for (Process p : processes) {
+                if (p.arrival == time && !ready.contains(p) && p.remaining > 0) {
+                    ready.add(p);
+                }
             }
 
-            if (current != null) ready.add(current);
+            if (current != null && current.remaining > 0) {
+                ready.add(current);
+            }
 
             if (ready.isEmpty()) {
-                current = null;
+                if (current == null && time > getMaxArrival(processes)) break;
                 time++;
+                current = null;
                 continue;
             }
 
@@ -101,11 +107,7 @@ public class SchedulerLogic {
                 current.response = time - current.arrival;
             }
 
-            if (!result.isEmpty() && result.get(result.size() - 1).pid == current.id) {
-                result.get(result.size() - 1).end++;
-            } else {
-                result.add(new GanttBlock(current.id, time, time + 1));
-            }
+            result.add(new GanttBlock(current.id, time, time + 1));
 
             current.remaining--;
             if (current.remaining == 0) {
@@ -121,18 +123,32 @@ public class SchedulerLogic {
         return result;
     }
 
+    private static int getMaxArrival(List<Process> processes) {
+        int max = 0;
+        for (Process p : processes) {
+            max = Math.max(max, p.arrival);
+        }
+        return max;
+    }
+
     public static List<GanttBlock> runRoundRobin(List<Process> processes, int quantum) {
         List<GanttBlock> result = new ArrayList<>();
         Queue<Process> queue = new LinkedList<>();
+        Set<Process> queued = new HashSet<>();
         int time = 0;
+
         processes.sort(Comparator.comparingInt(p -> p.arrival));
 
-        while (!processes.isEmpty() || !queue.isEmpty()) {
-            while (!processes.isEmpty() && processes.get(0).arrival <= time) {
-                queue.offer(processes.remove(0));
+        while (true) {
+            for (Process p : processes) {
+                if (p.arrival <= time && !queued.contains(p) && p.remaining > 0) {
+                    queue.offer(p);
+                    queued.add(p);
+                }
             }
 
             if (queue.isEmpty()) {
+                if (time > getMaxArrival(processes)) break;
                 time++;
                 continue;
             }
@@ -144,13 +160,16 @@ public class SchedulerLogic {
                 p.response = time - p.arrival;
             }
 
-            int execTime = Math.min(quantum, p.remaining);
-            result.add(new GanttBlock(p.id, time, time + execTime));
-            time += execTime;
-            p.remaining -= execTime;
+            int exec = Math.min(quantum, p.remaining);
+            result.add(new GanttBlock(p.id, time, time + exec));
+            time += exec;
+            p.remaining -= exec;
 
-            while (!processes.isEmpty() && processes.get(0).arrival <= time) {
-                queue.offer(processes.remove(0));
+            for (Process q : processes) {
+                if (q.arrival <= time && !queued.contains(q) && q.remaining > 0) {
+                    queue.offer(q);
+                    queued.add(q);
+                }
             }
 
             if (p.remaining > 0) {
@@ -251,4 +270,8 @@ public class SchedulerLogic {
         return avg;
     }
 }
+
+
+
+
 

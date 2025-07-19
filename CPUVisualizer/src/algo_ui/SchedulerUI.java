@@ -14,7 +14,7 @@ public class SchedulerUI extends JFrame {
     private JSlider speedSlider;
     private JCheckBox stepMode;
     private JTable inputTable, outputTable;
-    private JLabel avgMetricsLabel; // ✅ Label for averages
+    private JLabel avgMetricsLabel;
     private GanttChartPanel chartPanel = new GanttChartPanel();
     private JScrollPane chartScroll;
     private List<SchedulerLogic.Process> currentProcesses = new ArrayList<>();
@@ -63,34 +63,31 @@ public class SchedulerUI extends JFrame {
         });
 
         JButton generateRandomBtn = new JButton("🎲 Generate Random");
-        generateRandomBtn.addActionListener(e -> {
-            int count = 3;
-            try {
-                count = Integer.parseInt(processCountField.getText());
-            } catch (NumberFormatException ignored) {}
+generateRandomBtn.addActionListener(e -> {
+    int count = 3;
+    try {
+        count = Integer.parseInt(processCountField.getText());
+    } catch (NumberFormatException ignored) {}
 
-            currentProcesses.clear();
-            DefaultTableModel model = (DefaultTableModel) inputTable.getModel();
-            model.setRowCount(0);
-            Random rand = new Random();
+    currentProcesses.clear();
+    DefaultTableModel model = (DefaultTableModel) inputTable.getModel();
+    model.setRowCount(0);
+    Random rand = new Random();
 
-            String[] extensions = {".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"};
-            StringBuilder usedExts = new StringBuilder();
+    String selectedExt = (String) extensionSelector.getSelectedItem();
 
-            for (int i = 0; i < count; i++) {
-                int arrival = rand.nextInt(5);
-                int burst = 1 + rand.nextInt(9);
-                String ext = extensions[rand.nextInt(extensions.length)];
-                usedExts.append(ext).append(i < count - 1 ? ", " : "");
+    for (int i = 0; i < count; i++) {
+        int arrival = rand.nextInt(5);
+        int burst = 1 + rand.nextInt(9);
 
-                currentProcesses.add(new SchedulerLogic.Process(i, arrival, burst));
-                model.addRow(new Object[]{"P" + i, arrival, burst});
-            }
+        currentProcesses.add(new SchedulerLogic.Process(i, arrival, burst));
+        model.addRow(new Object[]{"P" + i, arrival, burst});
+    }
 
-            JOptionPane.showMessageDialog(this,
-                    "Generated " + count + " processes\nExtensions used: " + usedExts,
-                    "Random Generator", JOptionPane.INFORMATION_MESSAGE);
-        });
+    JOptionPane.showMessageDialog(this,
+            "Generated " + count + " processes\nExtension used: " + selectedExt,
+            "Random Generator", JOptionPane.INFORMATION_MESSAGE);
+});
 
         JButton simulateBtn = new JButton("▶️ Simulate");
         simulateBtn.addActionListener(e -> simulate());
@@ -158,7 +155,7 @@ public class SchedulerUI extends JFrame {
     }
 
     private void simulate() {
-        List<SchedulerLogic.Process> processes = new ArrayList<>();
+        List<SchedulerLogic.Process> clones = new ArrayList<>();
         DefaultTableModel model = (DefaultTableModel) inputTable.getModel();
         for (int i = 0; i < model.getRowCount(); i++) {
             try {
@@ -166,11 +163,11 @@ public class SchedulerUI extends JFrame {
                 int pid = Integer.parseInt(pidLabel.replaceAll("[^0-9]", ""));
                 int arrival = Integer.parseInt(model.getValueAt(i, 1).toString());
                 int burst = Integer.parseInt(model.getValueAt(i, 2).toString());
-                processes.add(new SchedulerLogic.Process(pid, arrival, burst));
+                clones.add(new SchedulerLogic.Process(pid, arrival, burst));
             } catch (Exception ignored) {}
         }
 
-        if (processes.isEmpty()) {
+        if (clones.isEmpty()) {
             JOptionPane.showMessageDialog(this, "No processes available for simulation.");
             return;
         }
@@ -180,11 +177,6 @@ public class SchedulerUI extends JFrame {
             quantum = Integer.parseInt(quantumField.getText());
         } catch (NumberFormatException e) {
             quantum = 2;
-        }
-
-        List<SchedulerLogic.Process> clones = new ArrayList<>();
-        for (SchedulerLogic.Process p : processes) {
-            clones.add(new SchedulerLogic.Process(p.id, p.arrival, p.burst));
         }
 
         List<GanttBlock> blocks = new ArrayList<>();
@@ -209,38 +201,39 @@ public class SchedulerUI extends JFrame {
         showAverages(clones);
     }
 
-      private void updateOutputTable(List<SchedulerLogic.Process> processes) {
-        DefaultTableModel model = new DefaultTableModel(new Object[]{
-                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
-        }, 0);
+    private void updateOutputTable(List<SchedulerLogic.Process> processes) {
+    DefaultTableModel model = new DefaultTableModel(new Object[]{
+            "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
+    }, 0);
 
-        for (SchedulerLogic.Process p : processes) {
-            model.addRow(new Object[]{
-                    "P" + p.id,
-                    p.arrival,
-                    p.burst,
-                    p.start,
-                    p.completion,
-                    p.turnaround,
-                    p.waiting,
-                    p.response
-            });
-        }
-
-        outputTable.setModel(model);
+    for (SchedulerLogic.Process p : processes) {
+        model.addRow(new Object[]{
+                "P" + p.id,
+                p.arrival,
+                p.burst,
+                p.start,
+                p.completion,
+                p.turnaround,
+                p.waiting,
+                p.response
+        });
     }
 
-    private void showAverages(List<SchedulerLogic.Process> processes) {
-        Map<String, Double> avg = SchedulerLogic.calculateAverages(processes);
-        avgMetricsLabel.setText(String.format(
-                "Average Turnaround: %.2f | Average Waiting: %.2f | Average Response: %.2f",
-                avg.get("avgTurnaround"),
-                avg.get("avgWaiting"),
-                avg.get("avgResponse")
-        ));
-    }
+    outputTable.setModel(model);
+}
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(SchedulerUI::new);
-    }
+// 🧩 Now outside of updateOutputTable
+private void showAverages(List<SchedulerLogic.Process> processes) {
+    Map<String, Double> avg = SchedulerLogic.calculateAverages(processes);
+    avgMetricsLabel.setText(String.format(
+        "Average Turnaround: %.2f | Average Waiting: %.2f | Average Response: %.2f",
+        avg.get("avgTurnaround"),
+        avg.get("avgWaiting"),
+        avg.get("avgResponse")
+    ));
+}
+   // ));
+//}
+  //      outputTable.setModel(model);
+    //}
 }

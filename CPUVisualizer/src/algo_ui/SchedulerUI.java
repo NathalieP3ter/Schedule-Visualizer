@@ -6,7 +6,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.Map;
 
 public class SchedulerUI extends JFrame {
     private JComboBox<String> algorithmSelector, extensionSelector;
@@ -14,7 +13,6 @@ public class SchedulerUI extends JFrame {
     private JSlider speedSlider;
     private JCheckBox stepMode;
     private JTable inputTable, outputTable;
-    private JLabel avgMetricsLabel;
     private GanttChartPanel chartPanel = new GanttChartPanel();
     private JScrollPane chartScroll;
     private List<SchedulerLogic.Process> currentProcesses = new ArrayList<>();
@@ -40,13 +38,17 @@ public class SchedulerUI extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Controls"));
 
         algorithmSelector = new JComboBox<>(new String[]{"FCFS", "SJF", "SRTF", "RR", "MLFQ"});
+        algorithmSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
+
         extensionSelector = new JComboBox<>(new String[]{
                 ".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"
         });
+        extensionSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
 
         quantumField = new JTextField("2");
-        processCountField = new JTextField("3");
         quantumField.setMaximumSize(new Dimension(100, 25));
+
+        processCountField = new JTextField("3");
         processCountField.setMaximumSize(new Dimension(100, 25));
 
         speedSlider = new JSlider(10, 1000, 300);
@@ -70,16 +72,21 @@ public class SchedulerUI extends JFrame {
             model.setRowCount(0);
             Random rand = new Random();
 
+            String[] extensions = {".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"};
+            StringBuilder usedExts = new StringBuilder();
+
             for (int i = 0; i < count; i++) {
                 int arrival = rand.nextInt(5);
                 int burst = 1 + rand.nextInt(9);
+                String ext = extensions[rand.nextInt(extensions.length)];
+                usedExts.append(ext).append(i < count - 1 ? ", " : "");
+
                 currentProcesses.add(new SchedulerLogic.Process(i, arrival, burst));
                 model.addRow(new Object[]{"P" + i, arrival, burst});
             }
 
-            String selected = extensionSelector.getSelectedItem().toString();
             JOptionPane.showMessageDialog(this,
-                    "Generated " + count + " processes\nUsing extension: " + selected,
+                    "Generated " + count + " processes\nExtensions used: " + usedExts,
                     "Random Generator", JOptionPane.INFORMATION_MESSAGE);
         });
 
@@ -90,15 +97,14 @@ public class SchedulerUI extends JFrame {
         resetBtn.addActionListener(e -> {
             ((DefaultTableModel) inputTable.getModel()).setRowCount(0);
             ((DefaultTableModel) outputTable.getModel()).setRowCount(0);
-            avgMetricsLabel.setText("");
             chartPanel.setBlocksInstant(new ArrayList<>());
         });
 
-        panel.add(new JLabel("Algorithm:"));      panel.add(algorithmSelector);
-        panel.add(new JLabel("Time Quantum:"));   panel.add(quantumField);
-        panel.add(new JLabel("Process Count:"));  panel.add(processCountField);
-        panel.add(new JLabel("File Extension:")); panel.add(extensionSelector);
-        panel.add(new JLabel("Step Delay (ms):"));panel.add(speedSlider);
+        panel.add(new JLabel("Algorithm:"));         panel.add(algorithmSelector);
+        panel.add(new JLabel("Time Quantum:"));       panel.add(quantumField);
+        panel.add(new JLabel("Process Count:"));      panel.add(processCountField);
+        panel.add(new JLabel("File Extension:"));     panel.add(extensionSelector);
+        panel.add(new JLabel("Step Delay (ms):"));    panel.add(speedSlider);
         panel.add(stepMode);
         panel.add(Box.createVerticalStrut(10));
         panel.add(addRow);
@@ -114,7 +120,7 @@ public class SchedulerUI extends JFrame {
 
         inputTable = new JTable(new DefaultTableModel(new Object[]{"PID", "Arrival", "Burst"}, 0));
         outputTable = new JTable(new DefaultTableModel(new Object[]{
-                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
+                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"
         }, 0));
 
         JScrollPane inputScroll = new JScrollPane(inputTable);
@@ -128,20 +134,12 @@ public class SchedulerUI extends JFrame {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         chartScroll.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
 
-        avgMetricsLabel = new JLabel("");
-        avgMetricsLabel.setHorizontalAlignment(SwingConstants.CENTER);
-        avgMetricsLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
-
         JPanel tables = new JPanel(new GridLayout(1, 2));
         tables.add(inputScroll);
         tables.add(outputScroll);
 
-        JPanel bottomPanel = new JPanel(new BorderLayout());
-        bottomPanel.add(chartScroll, BorderLayout.CENTER);
-        bottomPanel.add(avgMetricsLabel, BorderLayout.SOUTH);
-
         JSplitPane verticalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                tables, bottomPanel);
+                tables, chartScroll);
         verticalSplit.setDividerLocation(250);
 
         panel.add(verticalSplit, BorderLayout.CENTER);
@@ -197,12 +195,11 @@ public class SchedulerUI extends JFrame {
         }
 
         updateOutputTable(clones);
-        showAverages(clones);
     }
 
     private void updateOutputTable(List<SchedulerLogic.Process> processes) {
         DefaultTableModel model = new DefaultTableModel(new Object[]{
-                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
+                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"
         }, 0);
         for (SchedulerLogic.Process p : processes) {
             model.addRow(new Object[]{
@@ -212,21 +209,10 @@ public class SchedulerUI extends JFrame {
                     p.start,
                     p.completion,
                     p.turnaround,
-                    p.waiting,
-                    p.response
+                    p.waiting
             });
         }
         outputTable.setModel(model);
-    }
-
-    private void showAverages(List<SchedulerLogic.Process> processes) {
-        Map<String, Double> avg = SchedulerLogic.calculateAverages(processes);
-        avgMetricsLabel.setText(String.format(
-            "Average Turnaround: %.2f | Average Waiting: %.2f | Average Response: %.2f",
-            avg.get("avgTurnaround"),
-            avg.get("avgWaiting"),
-            avg.get("avgResponse")
-        ));
     }
 
     public static void main(String[] args) {

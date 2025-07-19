@@ -6,6 +6,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.Map;
 
 public class SchedulerUI extends JFrame {
     private JComboBox<String> algorithmSelector, extensionSelector;
@@ -13,6 +14,7 @@ public class SchedulerUI extends JFrame {
     private JSlider speedSlider;
     private JCheckBox stepMode;
     private JTable inputTable, outputTable;
+    private JLabel avgMetricsLabel; // ✅ Label for averages
     private GanttChartPanel chartPanel = new GanttChartPanel();
     private JScrollPane chartScroll;
     private List<SchedulerLogic.Process> currentProcesses = new ArrayList<>();
@@ -38,12 +40,12 @@ public class SchedulerUI extends JFrame {
         panel.setBorder(BorderFactory.createTitledBorder("Controls"));
 
         algorithmSelector = new JComboBox<>(new String[]{"FCFS", "SJF", "SRTF", "RR", "MLFQ"});
-        algorithmSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
+        algorithmSelector.setMaximumSize(new Dimension(200, 25));
 
         extensionSelector = new JComboBox<>(new String[]{
                 ".txt", ".csv", ".log", ".xml", ".json", ".dat", ".html"
         });
-        extensionSelector.setMaximumSize(new Dimension(200, 25)); // Balanced size
+        extensionSelector.setMaximumSize(new Dimension(200, 25));
 
         quantumField = new JTextField("2");
         quantumField.setMaximumSize(new Dimension(100, 25));
@@ -98,6 +100,7 @@ public class SchedulerUI extends JFrame {
             ((DefaultTableModel) inputTable.getModel()).setRowCount(0);
             ((DefaultTableModel) outputTable.getModel()).setRowCount(0);
             chartPanel.setBlocksInstant(new ArrayList<>());
+            avgMetricsLabel.setText("");
         });
 
         panel.add(new JLabel("Algorithm:"));         panel.add(algorithmSelector);
@@ -120,7 +123,7 @@ public class SchedulerUI extends JFrame {
 
         inputTable = new JTable(new DefaultTableModel(new Object[]{"PID", "Arrival", "Burst"}, 0));
         outputTable = new JTable(new DefaultTableModel(new Object[]{
-                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"
+                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
         }, 0));
 
         JScrollPane inputScroll = new JScrollPane(inputTable);
@@ -134,12 +137,20 @@ public class SchedulerUI extends JFrame {
                 JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
         chartScroll.setBorder(BorderFactory.createTitledBorder("Gantt Chart"));
 
+        avgMetricsLabel = new JLabel("");
+        avgMetricsLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        avgMetricsLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0));
+
         JPanel tables = new JPanel(new GridLayout(1, 2));
         tables.add(inputScroll);
         tables.add(outputScroll);
 
+        JPanel bottomPanel = new JPanel(new BorderLayout());
+        bottomPanel.add(chartScroll, BorderLayout.CENTER);
+        bottomPanel.add(avgMetricsLabel, BorderLayout.SOUTH);
+
         JSplitPane verticalSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
-                tables, chartScroll);
+                tables, bottomPanel);
         verticalSplit.setDividerLocation(250);
 
         panel.add(verticalSplit, BorderLayout.CENTER);
@@ -195,12 +206,14 @@ public class SchedulerUI extends JFrame {
         }
 
         updateOutputTable(clones);
+        showAverages(clones);
     }
 
-    private void updateOutputTable(List<SchedulerLogic.Process> processes) {
+      private void updateOutputTable(List<SchedulerLogic.Process> processes) {
         DefaultTableModel model = new DefaultTableModel(new Object[]{
-                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting"
+                "PID", "Arrival", "Burst", "Start", "Completion", "TAT", "Waiting", "Response"
         }, 0);
+
         for (SchedulerLogic.Process p : processes) {
             model.addRow(new Object[]{
                     "P" + p.id,
@@ -209,14 +222,25 @@ public class SchedulerUI extends JFrame {
                     p.start,
                     p.completion,
                     p.turnaround,
-                    p.waiting
+                    p.waiting,
+                    p.response
             });
         }
+
         outputTable.setModel(model);
+    }
+
+    private void showAverages(List<SchedulerLogic.Process> processes) {
+        Map<String, Double> avg = SchedulerLogic.calculateAverages(processes);
+        avgMetricsLabel.setText(String.format(
+                "Average Turnaround: %.2f | Average Waiting: %.2f | Average Response: %.2f",
+                avg.get("avgTurnaround"),
+                avg.get("avgWaiting"),
+                avg.get("avgResponse")
+        ));
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(SchedulerUI::new);
     }
 }
- 

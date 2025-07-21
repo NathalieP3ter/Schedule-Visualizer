@@ -31,8 +31,10 @@ Screenshots:
 <img width="1502" height="92" alt="Average Calculation" src="https://github.com/user-attachments/assets/e33bfc87-a149-4eaf-b6ae-7902a8f32e86" />
 <img width="1919" height="1018" alt="FCFS_Result" src="https://github.com/user-attachments/assets/e888ceaf-aa07-4a75-aa25-0f98ae563212" />
 <img width="1919" height="1024" alt="SJF Result" src="https://github.com/user-attachments/assets/e5b60199-13c8-488e-83fd-507f960e0aeb" />
-<img width="1919" height="1016" alt="SRTF_Result" src="https
-<img width="1916" height="990" alt="MLFQ_Result" src="https://github.com/user-attachments/assets/bfe4ca99-6458-42ef-8878-76baeb1e58a4" />
+<img width="814" height="448" alt="MLFQ_Result" src="https://github.com/user-attachments/assets/0c813b39-d9ef-4c90-83f8-2eb6e9e9f050" />
+<img width="813" height="452" alt="SRTF_Result" src="https://github.com/user-attachments/assets/0c7694e6-df79-4364-8264-36e726cf9926" />
+
+
 ://github.com/user-attachments/assets/5bae5e83-8cb7-4768-8fda-e59ff71bafc5" />
 <img width="1919" height="1018" alt="RR_Result" src="https://github.com/user-attachments/assets/16e6a2dd-2080-469b-b021-e9f3cb1cbf67" />
 
